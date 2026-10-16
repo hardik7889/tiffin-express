@@ -106,3 +106,32 @@ const DISH_PHOTOS = {
   "src": "https://commons.wikimedia.org/wiki/File:Vegetarian_Thali_from_Kolkata_8.jpg"
  }
 };
+
+/* Package hero photos: Wikimedia Commons (CC). */
+const PKG_PHOTOS = {
+ "pkg_bf": {
+  "lqip": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQBACdASoYAA0APt1cpkyopSOiMAgBEBuJaACsACP+xnhR6HyV41qWAAD+0PznpH9edcDG5Xm3d4ARLIJ8lkAfhtTWj6ZJ1dMyEe+4BsvaalSYn2oVIkAA",
+  "title": "Benne Masala Dosa.jpg",
+  "src": "https://commons.wikimedia.org/wiki/File:Benne_Masala_Dosa.jpg"
+ },
+ "pkg_dinner": {
+  "lqip": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAwCdASoYAA0APt1eqU2opSQiMAgBEBuJYgCdACIjtthzea8R9AAA/VCSSG72th6yxJcMDVvL0SEf9pb529KoGIMv9dJeMXEYyx+28RGAAA==",
+  "title": "Brinjal Curry 1.jpg",
+  "src": "https://commons.wikimedia.org/wiki/File:Brinjal_Curry_1.jpg"
+ },
+ "pkg_full": {
+  "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAADQAwCdASoYAA0APt1cp0yopSOiMAgBEBuJQBOgA9FulW0+l+UPWPAA/uwLNWEv/60KJIlWJ+W6hYCNacSgYDiICXnP7I/zoC+eE+R4+Enl48cKkx9hPilpgNpI6HQAAAA=",
+  "title": "Indian thali.jpg",
+  "src": "https://commons.wikimedia.org/wiki/File:Indian_thali.jpg"
+ },
+ "pkg_ld": {
+  "lqip": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADQAwCdASoYAA0APt1cp00opSOiMAgBEBuJagCdMoACtDpkc2FuPgAA7/3q37gUCrn7ND/KCI4A4MpXlNfMeNC2oj6Ev0Pjl1KmE5V0Z47/4AAA",
+  "title": "South Indian Meals - special.jpg",
+  "src": "https://commons.wikimedia.org/wiki/File:South_Indian_Meals_-_special.jpg"
+ },
+ "pkg_lunch": {
+  "lqip": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAwCdASoYAA0APt1cp0yopSOiMAgBEBuJQBdgAx488/t0WFhG2EwA/uNGLSqyDTZj4DkoGCrU2x0hLZDDTdTopzcXf4THQ2SiiAr8LRpeR6AAAAA=",
+  "title": "Lunch Meals.jpg",
+  "src": "https://commons.wikimedia.org/wiki/File:Lunch_Meals.jpg"
+ }
+};

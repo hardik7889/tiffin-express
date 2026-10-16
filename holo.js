@@ -198,28 +198,37 @@
     el.appendChild(frag);
   }
 
-  /* ---------- 4. pointer-tracked 3D tilt on dish photos ---------- */
+  /* ---------- 4. pointer-tracked 3D tilt on photos ---------- */
   var tiltBound = false;
   function bindTilt() {
     if (tiltBound) return;
     tiltBound = true;
+
+    function tiltTarget(el) {
+      return el.closest && (el.closest('.meal-art') || el.closest('.pkg-hero'));
+    }
+    function tiltImg(host) {
+      return host.querySelector('.dish-photo') || host.querySelector('.pkg-photo');
+    }
+
     document.addEventListener('pointermove', function (e) {
-      var t = e.target.closest && e.target.closest('.meal-art');
+      var t = tiltTarget(e.target);
       if (!t) return;
+      var img = tiltImg(t);
+      if (!img) return;
       var r = t.getBoundingClientRect();
       var px = (e.clientX - r.left) / r.width - .5;
       var py = (e.clientY - r.top) / r.height - .5;
-      var img = t.querySelector('.dish-photo');
-      if (!img) return;
       img.style.animation = 'none';
       img.style.transform =
         'rotateY(' + (px * 13).toFixed(2) + 'deg) rotateX(' +
         (-py * 13).toFixed(2) + 'deg) translateZ(22px) scale(1.07)';
     }, { passive: true });
+
     document.addEventListener('pointerout', function (e) {
-      var t = e.target.closest && e.target.closest('.meal-art');
+      var t = tiltTarget(e.target);
       if (!t) return;
-      var img = t.querySelector('.dish-photo');
+      var img = tiltImg(t);
       if (img) { img.style.transform = ''; img.style.animation = ''; }
     }, { passive: true });
   }

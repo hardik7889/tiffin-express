@@ -371,6 +371,61 @@ nav .cart-btn .badge {
 }
 .toast.error { background:linear-gradient(120deg,#ff5252,#ff5ec8); }
 
+/* ===== PACKAGE HERO PHOTO (3D banner) ===== */
+.pkg-hero {
+  position:relative; width:100%; height:190px; margin:-0.4rem 0 1.1rem;
+  border-radius:14px; overflow:hidden;
+  perspective:900px; transform-style:preserve-3d;
+  background:radial-gradient(circle at 50% 55%, rgba(94,231,255,.16), transparent 70%);
+}
+.pkg-hero.compact { height:130px; }
+.pkg-hero.wide    { height:230px; margin-bottom:1.4rem; }
+.pkg-hero-glow {
+  position:absolute; left:50%; top:52%; width:64%; height:74%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse, rgba(94,231,255,.30) 0%, rgba(255,94,200,.14) 46%, transparent 74%);
+  filter:blur(20px); z-index:1;
+  animation:holoPulse 5.2s ease-in-out infinite;
+}
+.pkg-photo {
+  position:relative; z-index:2;
+  width:100%; height:100%; object-fit:cover;
+  border-radius:14px;
+  transform-origin:50% 60%;
+  filter:drop-shadow(0 12px 28px rgba(0,0,0,.66)) saturate(1.06);
+  transition:transform .55s cubic-bezier(.2,.8,.2,1), filter .45s;
+  will-change:transform;
+  animation:pkgFloat 8s ease-in-out infinite;
+}
+@keyframes pkgFloat {
+  0%,100% { transform:translateY(0) rotateX(0deg) scale(1.015); }
+  50%     { transform:translateY(-5px) rotateX(2.6deg) scale(1.045); }
+}
+.pkg-card:hover .pkg-photo,
+.pkg-strip-card:hover .pkg-photo,
+.pkg-hero:hover .pkg-photo {
+  animation-play-state:paused;
+  transform:translateY(-7px) rotateX(4.5deg) scale(1.075);
+  filter:drop-shadow(0 20px 40px rgba(0,0,0,.74)) saturate(1.14) brightness(1.04);
+}
+.pkg-hero::after {
+  content:''; position:absolute; inset:0; z-index:3; border-radius:14px;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(94,231,255,.18) 0%, transparent 24%),
+    linear-gradient(0deg, rgba(255,94,200,.12) 0%, transparent 32%);
+  box-shadow:inset 0 0 0 1px rgba(94,231,255,.22), inset 0 -20px 40px rgba(0,0,0,.38);
+}
+.pkg-hero-tag {
+  position:absolute; left:12px; bottom:12px; z-index:4;
+  font-family:'Orbitron',sans-serif; font-size:.62rem; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+  padding:5px 12px; border-radius:999px;
+  background:rgba(5,6,15,.72); backdrop-filter:blur(8px);
+  color:var(--cyan); border:1px solid rgba(94,231,255,.35);
+  box-shadow:0 0 16px rgba(0,240,255,.28);
+}
+
 /* ---------- 3D extruded eyebrow (per-letter arc) ---------- */
 .eyebrow-3d {
   display:inline-block; white-space:nowrap;

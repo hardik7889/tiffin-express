@@ -444,7 +444,7 @@ function renderPackages(app) {
       <div class="pkg-strip">
         ${PACKAGES.map(p => `
           <div class="pkg-strip-card">
-            <div style="font-size:1.6rem;margin-bottom:0.3rem">${p.emoji}</div>
+            ${pkgHero(p, 'compact')}
             <div class="ps-name">${p.name}</div>
             <div class="ps-meals">${p.meals} · ${p.desc}</div>
             <div class="ps-price">₹${p.weekNew}<small>/week</small></div>
@@ -529,11 +529,30 @@ function weekTotal(pkg) {
   return DAYS.reduce((s, d) => s + dayTotal(pkg, d), 0);
 }
 
+function pkgPhoto(id) {
+  const key = 'pkg_' + id;
+  return (typeof PKG_PHOTOS !== 'undefined') && PKG_PHOTOS[key] ? PKG_PHOTOS[key] : null;
+}
+
+function pkgHero(p, cls) {
+  const ph = pkgPhoto(p.id);
+  if (!ph) return '';
+  return `
+    <div class="pkg-hero ${cls || ''}" data-tilt>
+      <div class="pkg-hero-glow"></div>
+      <img class="pkg-photo" src="img/pkg_${p.id}.webp" alt="${p.name}"
+           loading="lazy" decoding="async"
+           style="background-image:url('${ph.lqip}');background-size:cover;background-position:center">
+      <div class="pkg-hero-tag">${p.emoji} ${p.meals}</div>
+    </div>
+  `;
+}
+
 function renderPkgCard(p) {
   return `
     <div class="pkg-card ${p.featured ? 'featured' : ''}" id="pkg-${p.id}">
       ${p.featured ? '<span class="badge">Best Value</span>' : ''}
-      <div style="font-size:2rem;margin-bottom:0.5rem">${p.emoji}</div>
+      ${pkgHero(p)}
       <h3>${p.name}</h3>
       <div class="pkg-type">${p.meals}</div>
       <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem">${p.desc}</p>
@@ -585,6 +604,7 @@ function renderPkgCard(p) {
 function renderWeekBlock(p) {
   return `
     <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:1.8rem;margin-bottom:1.5rem">
+      ${pkgHero(p, 'wide')}
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.8rem;margin-bottom:1.2rem">
         <div>
           <h3 style="font-size:1.25rem">${p.emoji} ${p.name}</h3>
