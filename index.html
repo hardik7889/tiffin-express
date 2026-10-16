@@ -153,6 +153,30 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 .day-btn { padding:0.4rem 1rem; border-radius:50px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:0.85rem; }
 .day-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 
+/* WEEK MENU (package expand) */
+.pkg-card .week-menu { display:none; margin-top:1.2rem; border-top:1px solid var(--border); padding-top:1.2rem; text-align:left; }
+.pkg-card.open .week-menu { display:block; }
+.pkg-card .toggle-hint { font-size:0.8rem; color:var(--muted); margin-top:0.8rem; }
+.pkg-card.open .toggle-hint .arrow { display:inline-block; transform:rotate(180deg); }
+.week-day { margin-bottom:1rem; }
+.week-day-name { font-size:0.78rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.4rem; }
+.week-meal { display:flex; align-items:center; gap:0.6rem; padding:0.35rem 0; border-bottom:1px dashed var(--border); font-size:0.85rem; }
+.wm-tag { font-size:0.62rem; font-weight:700; color:var(--muted); border:1px solid var(--border); border-radius:4px; padding:0.1rem 0.35rem; min-width:48px; text-align:center; flex-shrink:0; }
+.wm-name { flex:1; }
+.wm-price { color:var(--accent2); font-weight:600; }
+.week-day-total { text-align:right; font-size:0.78rem; color:var(--muted); padding-top:0.3rem; }
+.pkg-actions { display:flex; gap:0.6rem; margin-top:1.2rem; }
+.pkg-actions .btn { flex:1; justify-content:center; }
+
+/* PACKAGE STRIP */
+.pkg-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem; }
+.pkg-strip-card { background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:1.2rem; }
+.pkg-strip-card .ps-name { font-weight:700; margin-bottom:0.2rem; }
+.pkg-strip-card .ps-meals { color:var(--muted); font-size:0.82rem; margin-bottom:0.8rem; }
+.pkg-strip-card .ps-price { font-size:1.3rem; font-weight:800; color:var(--accent2); margin-bottom:0.2rem; }
+.pkg-strip-card .ps-price small { font-size:0.8rem; color:var(--muted); font-weight:400; }
+.pkg-strip-card .ps-save { color:var(--green); font-size:0.78rem; font-weight:600; margin-bottom:0.9rem; }
+
 @media (max-width:768px) {
   .hero h1 { font-size:2rem; }
   nav .nav-links { gap:1rem; }
@@ -167,6 +191,7 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
   <a href="#/" class="logo">🍱 TiffinExpress</a>
   <div class="nav-links">
     <a href="#/" data-route="home">Home</a>
+    <a href="#/packages" data-route="packages">Packages</a>
     <a href="#/menu" data-route="menu">Menu</a>
     <a href="#/cart" data-route="cart">Cart</a>
     <a href="#/orders" data-route="orders">My Orders</a>
@@ -210,10 +235,15 @@ const MENU = {
 };
 
 const PACKAGES = [
-  { id:'full', name:'Full Day Combo', emoji:'🎁', meals:'Breakfast + Lunch + Dinner', desc:'Teeno waqt ka khana · 21 unique meals', weekOld:1690, weekNew:1499, monthOld:6699, monthNew:4999, save:'₹191/week', featured:true },
-  { id:'ld', name:'Lunch + Dinner', emoji:'🍛🍽️', meals:'2 Meals', desc:'Dopahar aur raat ka khana · 14 unique meals', weekOld:1270, weekNew:1119, monthOld:5443, monthNew:4200, save:'₹151/week', featured:false },
-  { id:'bf', name:'Breakfast Only', emoji:'🍱', meals:'Nashta', desc:'Monday se Sunday · 7 unique breakfast', weekOld:455, weekNew:420, monthOld:1950, monthNew:1650, save:'₹35/week', featured:false },
+  { id:'full', name:'Full Day Combo', emoji:'🎁', meals:'Breakfast + Lunch + Dinner', mealTypes:['breakfast','lunch','dinner'], desc:'Teeno waqt ka khana · 21 unique meals', weekOld:1690, weekNew:1499, monthOld:6699, monthNew:4999, save:'₹191/week', monthSave:'₹1,700', featured:true, note:'🎁 Teen waqt ka khana ek hi package mein · Free delivery 5km tak · Jain option available on request' },
+  { id:'ld', name:'Lunch + Dinner Combo', emoji:'🍛🍽️', meals:'2 Meals', mealTypes:['lunch','dinner'], desc:'Dopahar aur raat ka khana · 14 unique meals', weekOld:1270, weekNew:1119, monthOld:5443, monthNew:4200, save:'₹151/week', monthSave:'₹1,243', featured:false, note:'🍛🍽️ Dopahar aur raat ka khana ek package mein · Free delivery 5km tak · Jain option available on request' },
+  { id:'bf', name:'Breakfast Only', emoji:'🍱', meals:'Nashta', mealTypes:['breakfast'], desc:'Monday se Sunday · 7 unique breakfast', weekOld:455, weekNew:420, monthOld:1950, monthNew:1650, save:'₹35/week', monthSave:'₹300', featured:false, note:'🍱 Har din taaza banta hai · Free delivery 5km tak · Jain option available on request' },
+  { id:'lunch', name:'Lunch Only', emoji:'🍛', meals:'Dopahar ka khana', mealTypes:['lunch'], desc:'Monday se Sunday · 7 unique lunch', weekOld:630, weekNew:559, monthOld:2700, monthNew:2100, save:'₹71/week', monthSave:'₹600', featured:false, note:'🍛 Har din taaza banta hai · Free delivery 5km tak · Jain option available on request' },
+  { id:'dinner', name:'Dinner Only', emoji:'🍽️', meals:'Raat ka khana', mealTypes:['dinner'], desc:'Monday se Sunday · 7 unique dinner', weekOld:640, weekNew:569, monthOld:2740, monthNew:2150, save:'₹71/week', monthSave:'₹590', featured:false, note:'🍽️ Har din taaza banta hai · Free delivery 5km tak · Jain option available on request' },
 ];
+
+const MEAL_LABEL = { breakfast:'🍱 Breakfast', lunch:'🍛 Lunch', dinner:'🍽️ Dinner' };
+const MEAL_SHORT = { breakfast:'Nashta', lunch:'Lunch', dinner:'Dinner' };
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const ADMIN_PASSWORD = 'admin123';
@@ -251,6 +281,7 @@ function route() {
   if (link) link.classList.add('active');
 
   if (r === '' || r === 'home') renderHome(app);
+  else if (r === 'packages') renderPackages(app);
   else if (r === 'menu') renderMenu(app);
   else if (r === 'cart') renderCart(app);
   else if (r === 'orders') renderOrders(app);
@@ -262,6 +293,59 @@ function route() {
 window.addEventListener('hashchange', route);
 
 // ===== PAGES =====
+
+function renderPackages(app) {
+  app.innerHTML = `
+    <div class="page" style="max-width:1200px">
+      <h2>💎 Saare Tiffin Packages</h2>
+      <p style="color:var(--muted);margin-bottom:2rem">Har package ka poora 7-din ka menu neeche diya hai. Weekly ya Monthly — jo chahiye order karo.</p>
+
+      <div class="pkg-strip">
+        ${PACKAGES.map(p => `
+          <div class="pkg-strip-card">
+            <div style="font-size:1.6rem;margin-bottom:0.3rem">${p.emoji}</div>
+            <div class="ps-name">${p.name}</div>
+            <div class="ps-meals">${p.meals} · ${p.desc}</div>
+            <div class="ps-price">₹${p.weekNew}<small>/week</small></div>
+            <div class="ps-save">${p.save} bachat · Monthly ₹${p.monthNew}</div>
+            <div style="display:flex;gap:0.5rem">
+              <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','week')">Weekly</button>
+              <button class="btn btn-green btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','month')">Monthly</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <h3 style="margin:3rem 0 0.4rem;font-size:1.5rem">📅 Poora Weekly Menu — Package Wise</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Har package ka Monday se Sunday tak ka full menu, day total aur combo price ke saath</p>
+      ${PACKAGES.map(p => renderWeekBlock(p)).join('')}
+
+      <h3 style="margin:3rem 0 0.4rem;font-size:1.5rem">🍽️ Saare Meals — Alag Alag</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Har meal ko individually bhi order kar sakte ho</p>
+      ${['breakfast','lunch','dinner'].map(m => `
+        <div style="margin-bottom:2.5rem">
+          <h4 style="margin-bottom:1rem;color:var(--accent)">${MEAL_LABEL[m]} <span style="color:var(--muted);font-size:0.85rem;font-weight:400">— ${m === 'breakfast' ? '7 unique breakfast' : m === 'lunch' ? '7 unique lunch' : '7 unique dinner'}</span></h4>
+          <div class="menu-grid">
+            ${MENU[m].map(item => `
+              <div class="menu-card">
+                <div class="day">${item.day}</div>
+                <h4>${item.name}</h4>
+                <div class="desc">${item.desc}</div>
+                <div class="meta">
+                  <span class="price">₹${item.price}</span>
+                  <button class="add-btn" onclick="addToCart('${item.id}')">+ Add</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="text-align:right;color:var(--muted);font-size:0.85rem;margin-top:0.6rem">
+            Week total: <b style="color:var(--accent2)">₹${MENU[m].reduce((s,i) => s + i.price, 0)}</b>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
 
 function renderHome(app) {
   app.innerHTML = `
@@ -275,7 +359,7 @@ function renderHome(app) {
       <div class="stats" style="margin-top:3rem">
         <div class="stat"><div class="num">7</div><div class="lbl">Din</div></div>
         <div class="stat"><div class="num">21</div><div class="lbl">Meals</div></div>
-        <div class="stat"><div class="num">3</div><div class="lbl">Packages</div></div>
+        <div class="stat"><div class="num">5</div><div class="lbl">Packages</div></div>
         <div class="stat"><div class="num">100%</div><div class="lbl">Fresh</div></div>
       </div>
     </section>
@@ -284,20 +368,14 @@ function renderHome(app) {
       <h2>💎 Tiffin Packages</h2>
       <p class="sub">Package par click karo — poora weekly menu khul jayega</p>
       <div class="pkg-grid">
-        ${PACKAGES.map(p => `
-          <div class="pkg-card ${p.featured ? 'featured' : ''}" onclick="selectPackage('${p.id}')">
-            ${p.featured ? '<span class="badge">Best Value</span>' : ''}
-            <div style="font-size:2rem;margin-bottom:0.5rem">${p.emoji}</div>
-            <h3>${p.name}</h3>
-            <div class="pkg-type">${p.meals}</div>
-            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem">${p.desc}</p>
-            <div class="price">₹${p.weekNew}/week<span class="old">₹${p.weekOld}</span></div>
-            <div class="save">🚚 ${p.save} ki bachat · Free delivery 5km</div>
-            <div style="margin-top:0.5rem;color:var(--muted);font-size:0.9rem">₹${p.monthNew}/month <span style="text-decoration:line-through">₹${p.monthOld}</span></div>
-            <button class="btn btn-primary btn-sm" style="margin-top:1rem;width:100%;justify-content:center">Select Package</button>
-          </div>
-        `).join('')}
+        ${PACKAGES.map(p => renderPkgCard(p)).join('')}
       </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <h2>📅 Weekly Menu — Saare Packages</h2>
+      <p class="sub">Neeche har package ka poora 7-din ka menu ek saath</p>
+      ${PACKAGES.map(p => renderWeekBlock(p)).join('')}
     </section>
 
     <section class="section">
@@ -313,9 +391,137 @@ function renderHome(app) {
   `;
 }
 
+function dayTotal(pkg, day) {
+  return pkg.mealTypes.reduce((s, m) => s + MENU[m].find(i => i.day === day).price, 0);
+}
+
+function weekTotal(pkg) {
+  return DAYS.reduce((s, d) => s + dayTotal(pkg, d), 0);
+}
+
+function renderPkgCard(p) {
+  return `
+    <div class="pkg-card ${p.featured ? 'featured' : ''}" id="pkg-${p.id}">
+      ${p.featured ? '<span class="badge">Best Value</span>' : ''}
+      <div style="font-size:2rem;margin-bottom:0.5rem">${p.emoji}</div>
+      <h3>${p.name}</h3>
+      <div class="pkg-type">${p.meals}</div>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem">${p.desc}</p>
+      <div class="price">₹${p.weekNew}/week<span class="old">₹${p.weekOld}</span></div>
+      <div class="save">🚚 ${p.save} ki bachat · Free delivery 5km</div>
+      <div style="margin-top:0.5rem;color:var(--muted);font-size:0.9rem">₹${p.monthNew}/month <span style="text-decoration:line-through">₹${p.monthOld}</span> · ${p.monthSave} ki bachat</div>
+
+      <div class="pkg-actions">
+        <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">Order Week ₹${p.weekNew}</button>
+        <button class="btn btn-secondary btn-sm" onclick="orderPackage('${p.id}','month')">Month ₹${p.monthNew}</button>
+      </div>
+      <div class="toggle-hint" onclick="togglePkg('${p.id}')" style="cursor:pointer">
+        <span class="arrow">▼</span> Poora weekly menu dekho
+      </div>
+
+      <div class="week-menu">
+        ${DAYS.map(day => `
+          <div class="week-day">
+            <div class="week-day-name">${day}</div>
+            ${p.mealTypes.map(m => {
+              const it = MENU[m].find(i => i.day === day);
+              return `<div class="week-meal">
+                <span class="wm-tag">${MEAL_SHORT[m]}</span>
+                <span class="wm-name">${it.name}</span>
+                <span class="wm-price">₹${it.price}</span>
+              </div>`;
+            }).join('')}
+            <div class="week-day-total">Day Total <b style="color:var(--text)">₹${dayTotal(p, day)}</b></div>
+          </div>
+        `).join('')}
+        <div style="display:flex;justify-content:space-between;padding:0.8rem 0;border-top:1px solid var(--border);font-weight:700">
+          <span>Combo Total</span>
+          <span><span style="text-decoration:line-through;color:var(--muted);font-weight:400">₹${weekTotal(p)}</span> ₹${p.weekNew}/week</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:0.85rem">
+          <span>Monthly (30 din)</span>
+          <span><span style="text-decoration:line-through">₹${p.monthOld}</span> ₹${p.monthNew}/month</span>
+        </div>
+        <div style="margin-top:1rem;color:var(--muted);font-size:0.8rem;line-height:1.5">${p.note}</div>
+        <div class="pkg-actions">
+          <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">🍱 Weekly Order Karo</button>
+          <button class="btn btn-green btn-sm" onclick="orderPackage('${p.id}','month')">📅 Monthly Order Karo</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderWeekBlock(p) {
+  return `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:1.8rem;margin-bottom:1.5rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.8rem;margin-bottom:1.2rem">
+        <div>
+          <h3 style="font-size:1.25rem">${p.emoji} ${p.name}</h3>
+          <div style="color:var(--muted);font-size:0.85rem">${p.desc}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.4rem;font-weight:800;color:var(--accent2)">₹${p.weekNew}<small style="font-size:0.8rem;color:var(--muted);font-weight:400">/week</small></div>
+          <div style="color:var(--green);font-size:0.8rem;font-weight:600">${p.save} bachat</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+        ${DAYS.map(day => `
+          <div class="week-day">
+            <div class="week-day-name">${day}</div>
+            ${p.mealTypes.map(m => {
+              const it = MENU[m].find(i => i.day === day);
+              return `<div class="week-meal">
+                <span class="wm-tag">${MEAL_SHORT[m]}</span>
+                <span class="wm-name">${it.name}</span>
+                <span class="wm-price">₹${it.price}</span>
+              </div>`;
+            }).join('')}
+            <div class="week-day-total">Day Total <b style="color:var(--text)">₹${dayTotal(p, day)}</b></div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.8rem;margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border)">
+        <div style="color:var(--muted);font-size:0.85rem;max-width:520px">${p.note}</div>
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">Weekly ₹${p.weekNew}</button>
+          <button class="btn btn-green btn-sm" onclick="orderPackage('${p.id}','month')">Monthly ₹${p.monthNew}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function togglePkg(id) {
+  const el = document.getElementById('pkg-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+function orderPackage(id, period) {
+  const p = PACKAGES.find(x => x.id === id);
+  if (!p) return;
+  const price = period === 'week' ? p.weekNew : p.monthNew;
+  const cartId = 'pkg_' + p.id + '_' + period;
+  const existing = cart.find(c => c.id === cartId);
+  if (existing) existing.qty++;
+  else cart.push({
+    id: cartId,
+    name: `${p.name} — ${period === 'week' ? 'Weekly' : 'Monthly'}`,
+    desc: p.desc,
+    day: period === 'week' ? '7 din' : '30 din',
+    type: 'PACKAGE',
+    price: price,
+    qty: 1,
+    isPackage: true,
+    mealTypes: p.mealTypes,
+    period: period,
+  });
+  saveCart();
+  toast(`${p.name} (${period === 'week' ? 'weekly' : 'monthly'}) cart mein add ho gaya!`);
+}
+
 function selectPackage(id) {
-  toast(`Package select kar diya! Ab menu se items add karo.`);
-  location.hash = '#/menu';
+  togglePkg(id);
 }
 
 function submitHomeForm() {
