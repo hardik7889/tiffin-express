@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TiffinExpress — Ghar Jaisa Khana, Har Din</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0f;
@@ -230,8 +233,11 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
   .stats { gap:1.5rem; }
 }
 </style>
+<link rel="stylesheet" href="holo.css">
 </head>
 <body>
+
+<canvas id="aurora" aria-hidden="true"></canvas>
 
 <nav>
   <a href="#/" class="logo">🍱 TiffinExpress</a>
@@ -248,7 +254,9 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 
 <div id="app"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="food-art.js"></script>
+<script src="holo.js"></script>
 <script>
 // ===== MEAL CARD RENDERER (3D food art) =====
 function artFor(id) {
@@ -407,6 +415,7 @@ function route() {
   else if (r === 'orders') renderOrders(app);
   else if (r === 'admin') renderAdmin(app);
   else renderHome(app);
+  if (typeof window.holoBoot === 'function') window.holoBoot();
   window.scrollTo(0,0);
 }
 
@@ -457,6 +466,8 @@ function renderPackages(app) {
 function renderHome(app) {
   app.innerHTML = `
     <section class="hero">
+      <div id="holo-bg" aria-hidden="true"></div>
+      <div class="eyebrow-3d" data-text="7-DAY FOOD TIFFIN SERVICE" style="margin-bottom:18px;font-family:'Orbitron',sans-serif;font-size:clamp(14px,2.2vw,24px);font-weight:900;letter-spacing:.22em;text-transform:uppercase"></div>
       <h1>Har Din <span>Ghar Jaisa Khana</span><br>Holographic Speed Mein</h1>
       <p>Fresh, hygienic aur delicious tiffin service. Breakfast, Lunch aur Dinner — teeno time ka khana ek hi click par.</p>
       <div class="cta-row">
