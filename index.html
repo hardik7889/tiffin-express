@@ -177,6 +177,52 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 .pkg-strip-card .ps-price small { font-size:0.8rem; color:var(--muted); font-weight:400; }
 .pkg-strip-card .ps-save { color:var(--green); font-size:0.78rem; font-weight:600; margin-bottom:0.9rem; }
 
+/* ===== MEAL CARDS (3D food art) ===== */
+.meal-header { display:flex; justify-content:space-between; align-items:center; gap:1.5rem; flex-wrap:wrap; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:1.2rem 1.5rem; margin-bottom:1.5rem; }
+.mh-left { display:flex; align-items:center; gap:1rem; }
+.mh-icon { font-size:1.8rem; width:52px; height:52px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),#ff8c5a); border-radius:14px; flex-shrink:0; }
+.mh-left h3 { font-size:1.5rem; line-height:1.1; }
+.mh-left p { color:var(--muted); font-size:0.82rem; margin-top:0.2rem; }
+.mh-right { text-align:right; }
+.mh-price { font-size:1.6rem; font-weight:800; color:var(--accent); line-height:1.1; }
+.mh-price small { font-size:0.75rem; color:var(--muted); font-weight:400; }
+.mh-sub { color:var(--muted); font-size:0.8rem; margin-top:0.2rem; }
+.mh-badge { display:inline-block; margin-top:0.4rem; background:rgba(52,152,219,0.15); color:var(--blue); font-size:0.7rem; font-weight:700; padding:0.2rem 0.6rem; border-radius:20px; }
+
+.meal-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:1.1rem; }
+.meal-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:1.1rem; display:flex; flex-direction:column; transition:transform 0.25s, border-color 0.25s, box-shadow 0.25s; position:relative; }
+.meal-card:hover { transform:translateY(-4px); border-color:#3a3a52; box-shadow:0 14px 36px rgba(0,0,0,0.45); }
+.meal-card.featured-day { border-color:var(--green); box-shadow:0 0 0 1px rgba(46,204,113,0.35), 0 10px 30px rgba(46,204,113,0.12); }
+
+.meal-art { position:relative; height:150px; display:flex; align-items:center; justify-content:center; margin-bottom:0.9rem; }
+.meal-art .art-glow { position:absolute; width:132px; height:132px; border-radius:50%; background:radial-gradient(circle, rgba(120,190,255,0.22) 0%, rgba(120,190,255,0.07) 45%, transparent 72%); filter:blur(2px); }
+.meal-art svg { position:relative; width:100%; height:100%; overflow:visible; }
+.art-tag { position:absolute; top:4px; right:4px; font-size:0.6rem; font-weight:800; letter-spacing:0.6px; padding:0.18rem 0.5rem; border-radius:20px; text-transform:uppercase; }
+.tag-veg { background:rgba(124,194,66,0.18); color:#8fd14f; }
+.tag-sweet { background:rgba(247,197,72,0.18); color:var(--accent2); }
+.tag-south { background:rgba(52,152,219,0.18); color:#5dade2; }
+.tag-protein { background:rgba(155,89,182,0.18); color:#b07cc6; }
+.tag-special { background:rgba(236,64,122,0.18); color:#f06f9a; }
+.tag-weekend { background:rgba(241,196,15,0.18); color:#f4d03f; }
+.tag-comfort { background:rgba(93,173,226,0.18); color:#7fb8e8; }
+.tag-thali { background:rgba(230,126,34,0.18); color:#eb984e; }
+.tag-premium { background:rgba(241,196,15,0.18); color:#f4d03f; }
+.tag-feast { background:rgba(236,64,122,0.18); color:#f06f9a; }
+
+.meal-day { font-size:0.68rem; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; color:var(--accent); margin-bottom:0.25rem; }
+.meal-name { font-size:1.05rem; font-weight:700; line-height:1.25; margin-bottom:0.3rem; }
+.meal-desc { color:var(--muted); font-size:0.78rem; line-height:1.45; flex:1; margin-bottom:0.9rem; }
+.meal-foot { display:flex; align-items:center; justify-content:space-between; gap:0.6rem; padding-top:0.8rem; border-top:1px solid var(--border); }
+.meal-price { font-size:1.15rem; font-weight:800; color:var(--accent); }
+.meal-price small { font-size:0.7rem; color:var(--muted); font-weight:400; }
+.meal-foot .add-btn { background:var(--accent); color:#fff; border:none; border-radius:9px; padding:0.42rem 0.95rem; font-size:0.8rem; font-weight:700; transition:background 0.2s; }
+.meal-foot .add-btn:hover { background:#ff8c5a; }
+.meal-foot .add-btn.added { background:var(--green); }
+
+.meal-section { margin-bottom:3.5rem; }
+.meal-total-bar { display:flex; justify-content:flex-end; gap:1.5rem; color:var(--muted); font-size:0.85rem; margin-top:0.9rem; flex-wrap:wrap; }
+.meal-total-bar b { color:var(--accent2); }
+
 @media (max-width:768px) {
   .hero h1 { font-size:2rem; }
   nav .nav-links { gap:1rem; }
@@ -202,7 +248,81 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 
 <div id="app"></div>
 
+<script src="food-art.js"></script>
 <script>
+// ===== MEAL CARD RENDERER (3D food art) =====
+function artFor(id) {
+  const f = (typeof FOOD_ART !== 'undefined') && FOOD_ART[id];
+  return f ? f() : '';
+}
+function tagClass(t) {
+  return (typeof TAG_CLASS !== 'undefined' && TAG_CLASS[t]) || 'tag-veg';
+}
+
+function mealCard(item, featured) {
+  return `
+    <div class="meal-card ${featured ? 'featured-day' : ''}">
+      <div class="meal-art">
+        <div class="art-glow"></div>
+        <svg viewBox="0 0 220 150" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${artFor(item.id)}</svg>
+        <span class="art-tag ${tagClass(item.type)}">${item.type}</span>
+      </div>
+      <div class="meal-day">${item.day}</div>
+      <div class="meal-name">${item.name}</div>
+      <div class="meal-desc">${item.desc}</div>
+      <div class="meal-foot">
+        <span class="meal-price">₹${item.price}<small> /plate</small></span>
+        <button class="add-btn" id="add-${item.id}" onclick="addToCart('${item.id}')">+ Add</button>
+      </div>
+    </div>
+  `;
+}
+
+function mealHeader(meal, title, icon, note, sub) {
+  const items = MENU[meal];
+  const week = items.reduce((s, i) => s + i.price, 0);
+  const month = Math.round(week * 4.3);
+  const perPlate = Math.min(...items.map(i => i.price));
+  return `
+    <div class="meal-header">
+      <div class="mh-left">
+        <div class="mh-icon">${icon}</div>
+        <div>
+          <h3>${title}</h3>
+          <p>${sub}</p>
+        </div>
+      </div>
+      <div class="mh-right">
+        <div class="mh-price">₹${perPlate}<small> /plate</small></div>
+        <div class="mh-sub">₹${week}/week · ₹${month.toLocaleString('en-IN')}/month · free delivery</div>
+        <span class="mh-badge">🚚 Free Delivery 5km</span>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.2rem">${note}</p>
+  `;
+}
+
+function mealSection(meal, title, icon, note, sub, featuredDay) {
+  const items = MENU[meal];
+  const week = items.reduce((s, i) => s + i.price, 0);
+  return `
+    <div class="meal-section">
+      ${mealHeader(meal, title, icon, note, sub)}
+      <div class="meal-grid">
+        ${items.map(i => mealCard(i, i.day === featuredDay)).join('')}
+      </div>
+      <div class="meal-total-bar">
+        <span>Week total (7 plate): <b>₹${week}</b></span>
+        <span>Monthly (30 din): <b>₹${Math.round(week * 4.3).toLocaleString('en-IN')}</b></span>
+      </div>
+    </div>
+  `;
+}
+
+function todayName() {
+  return DAYS[(new Date().getDay() + 6) % 7];
+}
+
 // ===== DATA =====
 const MENU = {
   breakfast: [
@@ -323,25 +443,12 @@ function renderPackages(app) {
       <h3 style="margin:3rem 0 0.4rem;font-size:1.5rem">🍽️ Saare Meals — Alag Alag</h3>
       <p style="color:var(--muted);margin-bottom:1.5rem">Har meal ko individually bhi order kar sakte ho</p>
       ${['breakfast','lunch','dinner'].map(m => `
-        <div style="margin-bottom:2.5rem">
-          <h4 style="margin-bottom:1rem;color:var(--accent)">${MEAL_LABEL[m]} <span style="color:var(--muted);font-size:0.85rem;font-weight:400">— ${m === 'breakfast' ? '7 unique breakfast' : m === 'lunch' ? '7 unique lunch' : '7 unique dinner'}</span></h4>
-          <div class="menu-grid">
-            ${MENU[m].map(item => `
-              <div class="menu-card">
-                <div class="day">${item.day}</div>
-                <h4>${item.name}</h4>
-                <div class="desc">${item.desc}</div>
-                <div class="meta">
-                  <span class="price">₹${item.price}</span>
-                  <button class="add-btn" onclick="addToCart('${item.id}')">+ Add</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="text-align:right;color:var(--muted);font-size:0.85rem;margin-top:0.6rem">
-            Week total: <b style="color:var(--accent2)">₹${MENU[m].reduce((s,i) => s + i.price, 0)}</b>
-          </div>
-        </div>
+        <div id="sec-${m}">${mealSection(m,
+          m === 'breakfast' ? 'Breakfast' : m === 'lunch' ? 'Lunch' : 'Dinner',
+          m === 'breakfast' ? '🍱' : m === 'lunch' ? '🍛' : '🍽️',
+          `${m === 'breakfast' ? '🍱' : m === 'lunch' ? '🍛' : '🍽️'} Har din taaza banta hai · Free delivery 5km tak · Jain option available on request`,
+          `Monday se Sunday · 7 unique ${m} · free delivery`,
+          todayName())}</div>
       `).join('')}
     </div>
   `;
@@ -533,56 +640,40 @@ function submitHomeForm() {
 }
 
 function renderMenu(app) {
-  let currentDay = 'all';
-  let currentMeal = 'breakfast';
-
+  const feat = todayName();
   app.innerHTML = `
-    <div class="page">
-      <h2>🍽️ Full Menu</h2>
-      <p style="color:var(--muted);margin-bottom:1.5rem">Har din ka fresh menu — koi bhi item add karo cart mein</p>
-      <div class="menu-tabs">
-        ${['breakfast','lunch','dinner'].map(m => `<button class="menu-tab ${m === currentMeal ? 'active' : ''}" onclick="switchMeal('${m}')">${m === 'breakfast' ? '🍱 Nashta' : m === 'lunch' ? '🍛 Lunch' : '🍽️ Dinner'}</button>`).join('')}
+    <div class="page" style="max-width:1200px">
+      <h2 style="margin-bottom:0.4rem">🍽️ Full Menu — Weekly Thali Plan</h2>
+      <p style="color:var(--muted);margin-bottom:2rem">Monday se Sunday, har din ka fresh thali. Koi bhi meal add karo cart mein — ya poora weekly plan order karo.</p>
+
+      <div class="menu-tabs" style="margin-bottom:2.5rem">
+        ${['breakfast','lunch','dinner'].map(m => `<button class="menu-tab ${m === 'breakfast' ? 'active' : ''}" onclick="jumpMeal('${m}')">${MEAL_LABEL[m]}</button>`).join('')}
       </div>
-      <div class="day-filter">
-        <button class="day-btn active" onclick="switchDay('all')">All Days</button>
-        ${DAYS.map(d => `<button class="day-btn" onclick="switchDay('${d}')">${d.substring(0,3)}</button>`).join('')}
+
+      <div id="sec-breakfast">${mealSection('breakfast', 'Breakfast', '🍱',
+        '🍱 Har din taaza banta hai · Free delivery 5km tak · Jain option available on request',
+        'Monday se Sunday · 7 unique breakfast · free delivery', feat)}</div>
+
+      <div id="sec-lunch">${mealSection('lunch', 'Lunch', '🍛',
+        '🍛 Har din taaza banta hai · Free delivery 5km tak · Jain option available on request',
+        'Monday se Sunday · 7 unique lunch thali · free delivery', feat)}</div>
+
+      <div id="sec-dinner">${mealSection('dinner', 'Dinner', '🍽️',
+        '🍽️ Har din taaza banta hai · Free delivery 5km tak · Jain option available on request',
+        'Monday se Sunday · 7 unique dinner · free delivery', feat)}</div>
+
+      <div style="text-align:center;margin-top:1rem">
+        <a href="#/packages" class="btn btn-primary">💎 Poora Weekly Package Dekho</a>
       </div>
-      <div class="menu-grid" id="menuGrid"></div>
     </div>
   `;
-  window._menuState = { day: currentDay, meal: currentMeal };
-  renderMenuGrid();
 }
 
-function renderMenuGrid() {
-  const { day, meal } = window._menuState;
-  const grid = document.getElementById('menuGrid');
-  if (!grid) return;
-  let items = MENU[meal];
-  if (day !== 'all') items = items.filter(i => i.day === day);
-  grid.innerHTML = items.map(item => `
-    <div class="menu-card">
-      <div class="day">${item.day}</div>
-      <h4>${item.name}</h4>
-      <div class="desc">${item.desc}</div>
-      <div class="meta">
-        <span class="price">₹${item.price}</span>
-        <button class="add-btn" onclick="addToCart('${item.id}')">+ Add</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function switchMeal(m) {
-  window._menuState.meal = m;
-  document.querySelectorAll('.menu-tab').forEach((t, i) => t.classList.toggle('active', ['breakfast','lunch','dinner'][i] === m));
-  renderMenuGrid();
-}
-
-function switchDay(d) {
-  window._menuState.day = d;
-  document.querySelectorAll('.day-btn').forEach(b => b.classList.toggle('active', b.textContent.includes(d === 'all' ? 'All' : d.substring(0,3))));
-  renderMenuGrid();
+function jumpMeal(m) {
+  const el = document.getElementById('sec-' + m);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.menu-tab').forEach((t, i) =>
+    t.classList.toggle('active', ['breakfast','lunch','dinner'][i] === m));
 }
 
 function addToCart(id) {
@@ -594,6 +685,12 @@ function addToCart(id) {
       else cart.push({ ...item, qty: 1 });
       saveCart();
       toast(`${item.name} cart mein add ho gaya!`);
+      const btn = document.getElementById('add-' + id);
+      if (btn) {
+        btn.classList.add('added');
+        btn.textContent = '✓ Added';
+        setTimeout(() => { btn.classList.remove('added'); btn.textContent = '+ Add'; }, 1200);
+      }
       return;
     }
   }
