@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TiffinExpress — Ghar Jaisa Khana, Har Din</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --card: #12121a;
+  --card2: #1a1a25;
+  --accent: #ff6b35;
+  --accent2: #f7c548;
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --blue: #3498db;
+  --text: #e8e8f0;
+  --muted: #8888a0;
+  --border: #2a2a3a;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+a { color:inherit; text-decoration:none; }
+button { cursor:pointer; font-family:inherit; }
+
+/* NAV */
+nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:rgba(10,10,15,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:0 2rem; height:64px; display:flex; align-items:center; justify-content:space-between; }
+nav .logo { font-size:1.4rem; font-weight:800; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+nav .nav-links { display:flex; gap:2rem; align-items:center; }
+nav .nav-links a { color:var(--muted); font-size:0.95rem; transition:color 0.2s; }
+nav .nav-links a:hover, nav .nav-links a.active { color:var(--text); }
+nav .cart-btn { position:relative; background:var(--accent); color:#fff; border:none; border-radius:50px; padding:0.5rem 1.2rem; font-size:0.9rem; font-weight:600; }
+nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(--accent2); color:#000; font-size:0.7rem; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; }
+
+/* HERO */
+.hero { padding:120px 2rem 60px; text-align:center; background:radial-gradient(ellipse at 50% 0%, rgba(255,107,53,0.12), transparent 60%); }
+.hero h1 { font-size:3rem; font-weight:800; margin-bottom:1rem; line-height:1.15; }
+.hero h1 span { background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.hero p { color:var(--muted); font-size:1.1rem; max-width:600px; margin:0 auto 2rem; }
+.hero .cta-row { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+.btn { padding:0.85rem 2rem; border-radius:50px; font-size:1rem; font-weight:600; border:none; transition:transform 0.2s, box-shadow 0.2s; display:inline-flex; align-items:center; gap:0.5rem; }
+.btn:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(255,107,53,0.3); }
+.btn-primary { background:linear-gradient(135deg,var(--accent),#ff8c5a); color:#fff; }
+.btn-secondary { background:var(--card2); color:var(--text); border:1px solid var(--border); }
+.btn-green { background:linear-gradient(135deg,var(--green),#27ae60); color:#fff; }
+.btn-red { background:linear-gradient(135deg,var(--red),#c0392b); color:#fff; }
+.btn-blue { background:linear-gradient(135deg,var(--blue),#2980b9); color:#fff; }
+.btn-sm { padding:0.4rem 1rem; font-size:0.85rem; }
+.btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+/* STATS */
+.stats { display:flex; gap:3rem; justify-content:center; padding:2rem 0; flex-wrap:wrap; }
+.stat { text-align:center; }
+.stat .num { font-size:2.2rem; font-weight:800; color:var(--accent); }
+.stat .lbl { color:var(--muted); font-size:0.85rem; }
+
+/* SECTIONS */
+.section { padding:4rem 2rem; max-width:1200px; margin:0 auto; }
+.section h2 { font-size:2rem; text-align:center; margin-bottom:0.5rem; }
+.section .sub { text-align:center; color:var(--muted); margin-bottom:2.5rem; }
+
+/* PACKAGES */
+.pkg-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:1.5rem; }
+.pkg-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2rem; transition:transform 0.3s, box-shadow 0.3s; cursor:pointer; position:relative; overflow:hidden; }
+.pkg-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(255,107,53,0.15); }
+.pkg-card.featured { border-color:var(--accent); }
+.pkg-card .badge { position:absolute; top:1rem; right:1rem; background:var(--accent); color:#fff; padding:0.2rem 0.7rem; border-radius:20px; font-size:0.75rem; font-weight:700; }
+.pkg-card h3 { font-size:1.3rem; margin-bottom:0.3rem; }
+.pkg-card .pkg-type { color:var(--accent); font-size:0.85rem; font-weight:600; margin-bottom:1rem; }
+.pkg-card .price { font-size:2rem; font-weight:800; margin-bottom:0.3rem; }
+.pkg-card .price .old { font-size:1rem; color:var(--muted); text-decoration:line-through; font-weight:400; margin-left:0.5rem; }
+.pkg-card .save { color:var(--green); font-size:0.85rem; font-weight:600; margin-bottom:1rem; }
+.pkg-card .pkg-items { list-style:none; margin-bottom:1.5rem; }
+.pkg-card .pkg-items li { color:var(--muted); font-size:0.9rem; padding:0.3rem 0; border-bottom:1px solid var(--border); }
+.pkg-card .pkg-items li:last-child { border:none; }
+
+/* MENU */
+.menu-tabs { display:flex; gap:0.5rem; justify-content:center; margin-bottom:2rem; flex-wrap:wrap; }
+.menu-tab { padding:0.6rem 1.5rem; border-radius:50px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:0.9rem; transition:all 0.2s; }
+.menu-tab.active, .menu-tab:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+.menu-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1.2rem; }
+.menu-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.2rem; transition:transform 0.2s; }
+.menu-card:hover { transform:translateY(-2px); }
+.menu-card .day { color:var(--accent); font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+.menu-card h4 { font-size:1.05rem; margin:0.3rem 0; }
+.menu-card .desc { color:var(--muted); font-size:0.85rem; margin-bottom:0.8rem; }
+.menu-card .meta { display:flex; justify-content:space-between; align-items:center; }
+.menu-card .price { font-size:1.15rem; font-weight:700; color:var(--accent2); }
+.menu-card .add-btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:0.4rem 1rem; font-size:0.85rem; font-weight:600; }
+.menu-card .add-btn:hover { background:#ff8c5a; }
+
+/* CART PAGE */
+.page { padding:100px 2rem 4rem; max-width:900px; margin:0 auto; }
+.page h2 { margin-bottom:1.5rem; }
+.cart-empty { text-align:center; color:var(--muted); padding:4rem 0; }
+.cart-empty .icon { font-size:4rem; margin-bottom:1rem; }
+.cart-item { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.2rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+.cart-item .info h4 { font-size:1.05rem; }
+.cart-item .info .type { color:var(--muted); font-size:0.85rem; }
+.cart-item .qty-ctrl { display:flex; align-items:center; gap:0.8rem; }
+.cart-item .qty-ctrl button { width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-size:1.1rem; display:flex; align-items:center; justify-content:center; }
+.cart-item .qty-ctrl .qty { font-weight:700; min-width:24px; text-align:center; }
+.cart-item .price { font-weight:700; color:var(--accent2); }
+.cart-summary { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin-top:1.5rem; }
+.cart-summary .row { display:flex; justify-content:space-between; padding:0.5rem 0; color:var(--muted); }
+.cart-summary .row.total { border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem; font-size:1.2rem; font-weight:800; color:var(--text); }
+
+/* FORM */
+.form-group { margin-bottom:1.2rem; }
+.form-group label { display:block; margin-bottom:0.4rem; font-size:0.9rem; color:var(--muted); font-weight:500; }
+.form-group input, .form-group textarea, .form-group select { width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-size:0.95rem; font-family:inherit; transition:border-color 0.2s; }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline:none; border-color:var(--accent); }
+
+/* ORDER HISTORY */
+.order-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin-bottom:1.2rem; }
+.order-card .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem; }
+.order-card .order-id { font-weight:700; color:var(--accent); }
+.order-card .order-date { color:var(--muted); font-size:0.85rem; }
+.status { padding:0.3rem 1rem; border-radius:20px; font-size:0.8rem; font-weight:700; }
+.status-pending { background:rgba(247,197,72,0.15); color:var(--accent2); }
+.status-accepted { background:rgba(52,152,219,0.15); color:var(--blue); }
+.status-delivering { background:rgba(155,89,182,0.15); color:#9b59b6; }
+.status-delivered { background:rgba(46,204,113,0.15); color:var(--green); }
+.status-cancelled { background:rgba(231,76,60,0.15); color:var(--red); }
+.order-card .items { margin-bottom:1rem; }
+.order-card .items .item { color:var(--muted); font-size:0.9rem; padding:0.2rem 0; }
+.order-card .order-total { font-weight:700; color:var(--accent2); font-size:1.1rem; }
+
+/* ADMIN */
+.admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(350px,1fr)); gap:1.5rem; }
+.admin-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.5rem; }
+.admin-card .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem; }
+.admin-card .customer { margin-bottom:1rem; }
+.admin-card .customer .name { font-weight:700; }
+.admin-card .customer .detail { color:var(--muted); font-size:0.85rem; }
+.admin-card .actions { display:flex; gap:0.5rem; flex-wrap:wrap; }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:flex; align-items:center; justify-content:center; padding:1rem; }
+.modal { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2rem; max-width:450px; width:100%; text-align:center; }
+.modal h3 { margin-bottom:0.5rem; }
+.modal p { color:var(--muted); margin-bottom:1.5rem; }
+.modal .actions { display:flex; gap:0.8rem; justify-content:center; }
+
+/* TOAST */
+.toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:var(--card2); border:1px solid var(--border); color:var(--text); padding:0.85rem 1.5rem; border-radius:12px; font-size:0.9rem; z-index:3000; animation:toastIn 0.3s ease; box-shadow:0 8px 30px rgba(0,0,0,0.4); }
+.toast.success { border-color:var(--green); }
+.toast.error { border-color:var(--red); }
+@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+/* DAY FILTER */
+.day-filter { display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.day-btn { padding:0.4rem 1rem; border-radius:50px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:0.85rem; }
+.day-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+@media (max-width:768px) {
+  .hero h1 { font-size:2rem; }
+  nav .nav-links { gap:1rem; }
+  nav .nav-links a { font-size:0.8rem; }
+  .stats { gap:1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#/" class="logo">🍱 TiffinExpress</a>
+  <div class="nav-links">
+    <a href="#/" data-route="home">Home</a>
+    <a href="#/menu" data-route="menu">Menu</a>
+    <a href="#/cart" data-route="cart">Cart</a>
+    <a href="#/orders" data-route="orders">My Orders</a>
+    <a href="#/admin" data-route="admin" style="display:none" id="adminNav">Admin</a>
+    <button class="cart-btn" onclick="goCart()">🛒 <span class="badge" id="cartBadge">0</span></button>
+  </div>
+</nav>
+
+<div id="app"></div>
+
+<script>
+// ===== DATA =====
+const MENU = {
+  breakfast: [
+    { id:'b1', day:'Monday', name:'Aloo Paratha', desc:'2 Paratha + Dahi + Achaar + Butter', price:50, type:'VEG' },
+    { id:'b2', day:'Tuesday', name:'Poha + Jalebi', desc:'Poha with Sev + 4pc Jalebi + Chutney', price:45, type:'SWEET' },
+    { id:'b3', day:'Wednesday', name:'Idli Sambar', desc:'4 Idli + Sambar + Coconut Chutney', price:55, type:'SOUTH' },
+    { id:'b4', day:'Thursday', name:'Gobhi Paratha', desc:'Gobhi Paratha + Chatni + Dahi', price:60, type:'VEG' },
+    { id:'b5', day:'Friday', name:'Paneer Bhurji', desc:'Paneer Bhurji + 2 Butter Toast + Salad', price:65, type:'PROTEIN' },
+    { id:'b6', day:'Saturday', name:'Chole Bhature', desc:'2 Bhature + Chole + Onion + Lassi', price:70, type:'SPECIAL' },
+    { id:'b7', day:'Sunday', name:'Halwa Puri', desc:'Suji Halwa + 3 Puri + Aloo Sabzi', price:75, type:'WEEKEND' },
+  ],
+  lunch: [
+    { id:'l1', day:'Monday', name:'Rajma Chawal', desc:'Rajma curry + Jeera Rice + Salad + Lemon', price:75, type:'VEG' },
+    { id:'l2', day:'Tuesday', name:'Aloo Gobi + Roti', desc:'Aloo Gobi Sabzi + 4 Roti + Jeera Rice', price:70, type:'VEG' },
+    { id:'l3', day:'Wednesday', name:'Kadhi Chawal', desc:'Punjabi Kadhi + Rice + Papad + Achaar', price:80, type:'COMFORT' },
+    { id:'l4', day:'Thursday', name:'Dal Tadka Thali', desc:'Dal Tadka + Jeera Rice + 2 Roti + Salad', price:85, type:'THALI' },
+    { id:'l5', day:'Friday', name:'Veg Biryani', desc:'Dum Veg Biryani + Raita + Papad + Salad', price:100, type:'SPECIAL' },
+    { id:'l6', day:'Saturday', name:'Paneer Butter Masala', desc:'Paneer Makhani + 4 Roti + Jeera Rice', price:105, type:'PREMIUM' },
+    { id:'l7', day:'Sunday', name:'Special Thali', desc:'3 Puri + Rice + Aloo Sabzi + Dal + Gulab Jamun', price:115, type:'FEAST' },
+  ],
+  dinner: [
+    { id:'d1', day:'Monday', name:'Mix Veg + Roti', desc:'Mix Veg Sabzi + 4 Roti + Dal + Jeera Rice', price:65, type:'VEG' },
+    { id:'d2', day:'Tuesday', name:'Chole Jeera Rice', desc:'Chole + Jeera Rice + 2 Roti + Onion + Lemon', price:70, type:'PROTEIN' },
+    { id:'d3', day:'Wednesday', name:'Paneer Tikka Masala', desc:'Paneer Tikka Masala + 4 Roti + Jeera Rice', price:90, type:'PREMIUM' },
+    { id:'d4', day:'Thursday', name:'Dal Makhani + Roti', desc:'Dal Makhani + Rice + 4 Roti + Salad', price:110, type:'COMFORT' },
+    { id:'d5', day:'Friday', name:'Aloo Matar + Puri', desc:'Aloo Matar + 5 Puri + Jeera Rice + Kheer', price:120, type:'COMFORT' },
+    { id:'d6', day:'Saturday', name:'Dal Fry + Roti', desc:'Dal Fry + 4 Roti + Rice + Salad', price:85, type:'FEAST' },
+    { id:'d7', day:'Sunday', name:'Malai Kofta + Roti', desc:'Malai Kofta + 4 Roti + Jeera Rice', price:100, type:'FEAST' },
+  ],
+};
+
+const PACKAGES = [
+  { id:'full', name:'Full Day Combo', emoji:'🎁', meals:'Breakfast + Lunch + Dinner', desc:'Teeno waqt ka khana · 21 unique meals', weekOld:1690, weekNew:1499, monthOld:6699, monthNew:4999, save:'₹191/week', featured:true },
+  { id:'ld', name:'Lunch + Dinner', emoji:'🍛🍽️', meals:'2 Meals', desc:'Dopahar aur raat ka khana · 14 unique meals', weekOld:1270, weekNew:1119, monthOld:5443, monthNew:4200, save:'₹151/week', featured:false },
+  { id:'bf', name:'Breakfast Only', emoji:'🍱', meals:'Nashta', desc:'Monday se Sunday · 7 unique breakfast', weekOld:455, weekNew:420, monthOld:1950, monthNew:1650, save:'₹35/week', featured:false },
+];
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const ADMIN_PASSWORD = 'admin123';
+
+// ===== STATE =====
+let orders = JSON.parse(localStorage.getItem('tiffin_orders') || '[]');
+let cart = JSON.parse(localStorage.getItem('tiffin_cart') || '[]');
+
+function saveOrders() { localStorage.setItem('tiffin_orders', JSON.stringify(orders)); }
+function saveCart() { localStorage.setItem('tiffin_cart', JSON.stringify(cart)); updateCartBadge(); }
+function updateCartBadge() {
+  const b = document.getElementById('cartBadge');
+  if (b) b.textContent = cart.reduce((s,i) => s + i.qty, 0);
+}
+
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+function genOrderId() {
+  return 'TF' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2,5).toUpperCase();
+}
+
+// ===== ROUTER =====
+function route() {
+  const hash = location.hash || '#/';
+  const app = document.getElementById('app');
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const r = hash.replace('#/','').split('?')[0];
+  const link = document.querySelector(`[data-route="${r}"]`);
+  if (link) link.classList.add('active');
+
+  if (r === '' || r === 'home') renderHome(app);
+  else if (r === 'menu') renderMenu(app);
+  else if (r === 'cart') renderCart(app);
+  else if (r === 'orders') renderOrders(app);
+  else if (r === 'admin') renderAdmin(app);
+  else renderHome(app);
+  window.scrollTo(0,0);
+}
+
+window.addEventListener('hashchange', route);
+
+// ===== PAGES =====
+
+function renderHome(app) {
+  app.innerHTML = `
+    <section class="hero">
+      <h1>Har Din <span>Ghar Jaisa Khana</span><br>Holographic Speed Mein</h1>
+      <p>Fresh, hygienic aur delicious tiffin service. Breakfast, Lunch aur Dinner — teeno time ka khana ek hi click par.</p>
+      <div class="cta-row">
+        <a href="#/menu" class="btn btn-primary">🍽️ Menu Dekho</a>
+        <a href="#/cart" class="btn btn-secondary">🛒 Cart Check Karo</a>
+      </div>
+      <div class="stats" style="margin-top:3rem">
+        <div class="stat"><div class="num">7</div><div class="lbl">Din</div></div>
+        <div class="stat"><div class="num">21</div><div class="lbl">Meals</div></div>
+        <div class="stat"><div class="num">3</div><div class="lbl">Packages</div></div>
+        <div class="stat"><div class="num">100%</div><div class="lbl">Fresh</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>💎 Tiffin Packages</h2>
+      <p class="sub">Package par click karo — poora weekly menu khul jayega</p>
+      <div class="pkg-grid">
+        ${PACKAGES.map(p => `
+          <div class="pkg-card ${p.featured ? 'featured' : ''}" onclick="selectPackage('${p.id}')">
+            ${p.featured ? '<span class="badge">Best Value</span>' : ''}
+            <div style="font-size:2rem;margin-bottom:0.5rem">${p.emoji}</div>
+            <h3>${p.name}</h3>
+            <div class="pkg-type">${p.meals}</div>
+            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem">${p.desc}</p>
+            <div class="price">₹${p.weekNew}/week<span class="old">₹${p.weekOld}</span></div>
+            <div class="save">🚚 ${p.save} ki bachat · Free delivery 5km</div>
+            <div style="margin-top:0.5rem;color:var(--muted);font-size:0.9rem">₹${p.monthNew}/month <span style="text-decoration:line-through">₹${p.monthOld}</span></div>
+            <button class="btn btn-primary btn-sm" style="margin-top:1rem;width:100%;justify-content:center">Select Package</button>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>📞 Order Karna Hai?</h2>
+      <p class="sub">Form bharo — 2 minute mein call aa jayegi</p>
+      <div style="max-width:600px;margin:0 auto">
+        <div class="form-group"><label>Aapka Naam</label><input type="text" id="homeName" placeholder="Naam likho"></div>
+        <div class="form-group"><label>Phone Number</label><input type="tel" id="homePhone" placeholder="Phone number"></div>
+        <div class="form-group"><label>Message</label><textarea id="homeMsg" rows="3" placeholder="Kuch poochna hai?"></textarea></div>
+        <button class="btn btn-primary" onclick="submitHomeForm()">📞 Call Karo</button>
+      </div>
+    </section>
+  `;
+}
+
+function selectPackage(id) {
+  toast(`Package select kar diya! Ab menu se items add karo.`);
+  location.hash = '#/menu';
+}
+
+function submitHomeForm() {
+  const name = document.getElementById('homeName').value.trim();
+  const phone = document.getElementById('homePhone').value.trim();
+  if (!name || !phone) { toast('Naam aur phone number required hai!', 'error'); return; }
+  const msg = document.getElementById('homeMsg').value.trim();
+  toast(`📞 ${name}, hum ${phone} par call karenge!${msg ? ' Message: ' + msg : ''}`);
+}
+
+function renderMenu(app) {
+  let currentDay = 'all';
+  let currentMeal = 'breakfast';
+
+  app.innerHTML = `
+    <div class="page">
+      <h2>🍽️ Full Menu</h2>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Har din ka fresh menu — koi bhi item add karo cart mein</p>
+      <div class="menu-tabs">
+        ${['breakfast','lunch','dinner'].map(m => `<button class="menu-tab ${m === currentMeal ? 'active' : ''}" onclick="switchMeal('${m}')">${m === 'breakfast' ? '🍱 Nashta' : m === 'lunch' ? '🍛 Lunch' : '🍽️ Dinner'}</button>`).join('')}
+      </div>
+      <div class="day-filter">
+        <button class="day-btn active" onclick="switchDay('all')">All Days</button>
+        ${DAYS.map(d => `<button class="day-btn" onclick="switchDay('${d}')">${d.substring(0,3)}</button>`).join('')}
+      </div>
+      <div class="menu-grid" id="menuGrid"></div>
+    </div>
+  `;
+  window._menuState = { day: currentDay, meal: currentMeal };
+  renderMenuGrid();
+}
+
+function renderMenuGrid() {
+  const { day, meal } = window._menuState;
+  const grid = document.getElementById('menuGrid');
+  if (!grid) return;
+  let items = MENU[meal];
+  if (day !== 'all') items = items.filter(i => i.day === day);
+  grid.innerHTML = items.map(item => `
+    <div class="menu-card">
+      <div class="day">${item.day}</div>
+      <h4>${item.name}</h4>
+      <div class="desc">${item.desc}</div>
+      <div class="meta">
+        <span class="price">₹${item.price}</span>
+        <button class="add-btn" onclick="addToCart('${item.id}')">+ Add</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function switchMeal(m) {
+  window._menuState.meal = m;
+  document.querySelectorAll('.menu-tab').forEach((t, i) => t.classList.toggle('active', ['breakfast','lunch','dinner'][i] === m));
+  renderMenuGrid();
+}
+
+function switchDay(d) {
+  window._menuState.day = d;
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.toggle('active', b.textContent.includes(d === 'all' ? 'All' : d.substring(0,3))));
+  renderMenuGrid();
+}
+
+function addToCart(id) {
+  for (const meal of Object.values(MENU)) {
+    const item = meal.find(i => i.id === id);
+    if (item) {
+      const existing = cart.find(c => c.id === id);
+      if (existing) existing.qty++;
+      else cart.push({ ...item, qty: 1 });
+      saveCart();
+      toast(`${item.name} cart mein add ho gaya!`);
+      return;
+    }
+  }
+}
+
+function goCart() { location.hash = '#/cart'; }
+
+function renderCart(app) {
+  if (cart.length === 0) {
+    app.innerHTML = `
+      <div class="page">
+        <h2>🛒 Cart</h2>
+        <div class="cart-empty">
+          <div class="icon">🛒</div>
+          <h3>Cart khaali hai!</h3>
+          <p>Menu se items add karo</p>
+          <a href="#/menu" class="btn btn-primary" style="margin-top:1rem">Menu Dekho</a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  app.innerHTML = `
+    <div class="page">
+      <h2>🛒 Cart (${cart.reduce((s,i) => s + i.qty, 0)} items)</h2>
+      ${cart.map(item => `
+        <div class="cart-item">
+          <div class="info">
+            <h4>${item.name}</h4>
+            <div class="type">${item.day} · ${item.type} · ${item.desc}</div>
+          </div>
+          <div class="qty-ctrl">
+            <button onclick="changeQty('${item.id}', -1)">−</button>
+            <span class="qty">${item.qty}</span>
+            <button onclick="changeQty('${item.id}', 1)">+</button>
+          </div>
+          <div class="price">₹${item.price * item.qty}</div>
+        </div>
+      `).join('')}
+      <div class="cart-summary">
+        <div class="row"><span>Subtotal</span><span>₹${total}</span></div>
+        <div class="row"><span>Delivery</span><span style="color:var(--green)">FREE (5km)</span></div>
+        <div class="row total"><span>Total</span><span>₹${total}</span></div>
+      </div>
+      <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap">
+        <a href="#/menu" class="btn btn-secondary">← Menu</a>
+        <button class="btn btn-primary" onclick="showCheckout()" style="flex:1;justify-content:center">Checkout →</button>
+      </div>
+    </div>
+  `;
+}
+
+function changeQty(id, delta) {
+  const item = cart.find(c => c.id === id);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) cart = cart.filter(c => c.id !== id);
+  saveCart();
+  renderCart(document.getElementById('app'));
+}
+
+function showCheckout() {
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'checkoutModal';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:500px;text-align:left">
+      <h3>📋 Checkout</h3>
+      <p style="margin-bottom:1.5rem">Apna details bharo — order place ho jayega!</p>
+      <div class="form-group"><label>Naam *</label><input type="text" id="chkName" placeholder="Apna naam"></div>
+      <div class="form-group"><label>Phone *</label><input type="tel" id="chkPhone" placeholder="10 digit phone number"></div>
+      <div class="form-group"><label>Address *</label><textarea id="chkAddress" rows="3" placeholder="Delivery address (area, landmark)"></textarea></div>
+      <div class="form-group"><label>Payment</label><select id="chkPayment"><option value="cod">Cash on Delivery</option><option value="upi">UPI</option><option value="card">Card</option></select></div>
+      <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem">
+        <button class="btn btn-secondary btn-sm" onclick="closeCheckout()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="placeOrder()">Place Order (₹${total})</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function closeCheckout() {
+  const m = document.getElementById('checkoutModal');
+  if (m) m.remove();
+}
+
+function placeOrder() {
+  const name = document.getElementById('chkName').value.trim();
+  const phone = document.getElementById('chkPhone').value.trim();
+  const address = document.getElementById('chkAddress').value.trim();
+  const payment = document.getElementById('chkPayment').value;
+  if (!name || !phone || !address) { toast('Saare fields bharo!', 'error'); return; }
+  if (phone.length < 10) { toast('Valid phone number daalo!', 'error'); return; }
+
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const order = {
+    id: genOrderId(),
+    customer: { name, phone, address, payment },
+    items: [...cart],
+    total,
+    status: 'pending',
+    date: new Date().toISOString(),
+    timeline: [{ status: 'pending', time: new Date().toISOString() }],
+  };
+  orders.unshift(order);
+  saveOrders();
+  cart = [];
+  saveCart();
+  closeCheckout();
+  toast(`Order place ho gaya! Order ID: ${order.id}`);
+  location.hash = '#/orders';
+}
+
+function renderOrders(app) {
+  if (orders.length === 0) {
+    app.innerHTML = `
+      <div class="page">
+        <h2>📦 My Orders</h2>
+        <div class="cart-empty">
+          <div class="icon">📦</div>
+          <h3>Abhi koi order nahi!</h3>
+          <p>Menu se items add karo aur order karo</p>
+          <a href="#/menu" class="btn btn-primary" style="margin-top:1rem">Menu Dekho</a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="page">
+      <h2>📦 My Orders (${orders.length})</h2>
+      ${orders.map(o => {
+        const d = new Date(o.date);
+        const dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) + ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+        const itemNames = o.items.map(i => `${i.name} ×${i.qty}`).join(', ');
+        return `
+          <div class="order-card">
+            <div class="order-header">
+              <span class="order-id">${o.id}</span>
+              <span class="order-date">${dateStr}</span>
+              <span class="status status-${o.status}">${getStatusLabel(o.status)}</span>
+            </div>
+            <div class="items">
+              ${o.items.map(i => `<div class="item">${i.name} ×${i.qty} — ₹${i.price * i.qty}</div>`).join('')}
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+              <span class="order-total">Total: ₹${o.total}</span>
+              <span style="color:var(--muted);font-size:0.85rem">${o.customer.name} · ${o.customer.phone}</span>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function getStatusLabel(s) {
+  const m = { pending:'⏳ Pending', accepted:'✅ Accepted', delivering:'🚚 Delivering', delivered:'📦 Delivered', cancelled:'❌ Cancelled' };
+  return m[s] || s;
+}
+
+// ===== ADMIN =====
+let isAdmin = sessionStorage.getItem('tiffin_admin') === '1';
+
+function renderAdmin(app) {
+  if (!isAdmin) {
+    app.innerHTML = `
+      <div class="page">
+        <h2>🔐 Admin Login</h2>
+        <p style="color:var(--muted);margin-bottom:1.5rem">Admin panel access karne ke liye password daalo</p>
+        <div class="form-group" style="max-width:400px"><label>Password</label><input type="password" id="adminPass" placeholder="Admin password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+        <button class="btn btn-primary" onclick="doAdminLogin()">Login</button>
+        <button class="btn btn-secondary" style="margin-left:0.5rem" onclick="location.hash='#/'">Home</button>
+      </div>
+    `;
+    return;
+  }
+
+  document.getElementById('adminNav').style.display = '';
+
+  const pending = orders.filter(o => o.status === 'pending');
+  const accepted = orders.filter(o => o.status === 'accepted');
+  const delivering = orders.filter(o => o.status === 'delivering');
+  const delivered = orders.filter(o => o.status === 'delivered');
+  const cancelled = orders.filter(o => o.status === 'cancelled');
+
+  app.innerHTML = `
+    <div class="page" style="max-width:1200px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+        <h2>🔐 Admin Dashboard</h2>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <span class="status status-pending">${pending.length} Pending</span>
+          <span class="status status-accepted">${accepted.length} Accepted</span>
+          <span class="status status-delivering">${delivering.length} Delivering</span>
+          <span class="status status-delivered">${delivered.length} Delivered</span>
+          <span class="status status-cancelled">${cancelled.length} Cancelled</span>
+        </div>
+      </div>
+      <div class="cta-row" style="margin-bottom:2rem">
+        <button class="btn btn-sm btn-primary" onclick="filterAdmin('all')">All</button>
+        <button class="btn btn-sm btn-secondary" onclick="filterAdmin('pending')">Pending</button>
+        <button class="btn btn-sm btn-secondary" onclick="filterAdmin('accepted')">Accepted</button>
+        <button class="btn btn-sm btn-secondary" onclick="filterAdmin('delivering')">Delivering</button>
+        <button class="btn btn-sm btn-secondary" onclick="filterAdmin('delivered')">Delivered</button>
+        <button class="btn btn-sm btn-red" onclick="logoutAdmin()">Logout</button>
+      </div>
+      <div class="admin-grid" id="adminGrid"></div>
+    </div>
+  `;
+  window._adminFilter = 'all';
+  renderAdminGrid();
+}
+
+function doAdminLogin() {
+  const pass = document.getElementById('adminPass').value;
+  if (pass === ADMIN_PASSWORD) {
+    isAdmin = true;
+    sessionStorage.setItem('tiffin_admin', '1');
+    toast('Admin login successful!');
+    renderAdmin(document.getElementById('app'));
+  } else {
+    toast('Galat password!', 'error');
+  }
+}
+
+function logoutAdmin() {
+  isAdmin = false;
+  sessionStorage.removeItem('tiffin_admin');
+  document.getElementById('adminNav').style.display = 'none';
+  toast('Admin logout ho gaya');
+  location.hash = '#/';
+}
+
+function filterAdmin(status) {
+  window._adminFilter = status;
+  renderAdminGrid();
+}
+
+function renderAdminGrid() {
+  const grid = document.getElementById('adminGrid');
+  if (!grid) return;
+  let filtered = orders;
+  if (window._adminFilter && window._adminFilter !== 'all') {
+    filtered = orders.filter(o => o.status === window._adminFilter);
+  }
+  if (filtered.length === 0) {
+    grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:2rem">Koi order nahi mila</p>';
+    return;
+  }
+  grid.innerHTML = filtered.map(o => {
+    const d = new Date(o.date);
+    const dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    return `
+      <div class="admin-card">
+        <div class="order-header">
+          <span class="order-id">${o.id}</span>
+          <span class="status status-${o.status}">${getStatusLabel(o.status)}</span>
+        </div>
+        <div style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">${dateStr}</div>
+        <div class="customer">
+          <div class="name">${o.customer.name}</div>
+          <div class="detail">📞 ${o.customer.phone}</div>
+          <div class="detail">📍 ${o.customer.address}</div>
+          <div class="detail">💳 ${o.customer.payment === 'cod' ? 'Cash on Delivery' : o.customer.payment === 'upi' ? 'UPI' : 'Card'}</div>
+        </div>
+        <div style="margin-bottom:1rem">
+          ${o.items.map(i => `<div style="color:var(--muted);font-size:0.85rem;padding:0.2rem 0">${i.name} ×${i.qty} — ₹${i.price * i.qty}</div>`).join('')}
+        </div>
+        <div style="font-weight:700;color:var(--accent2);margin-bottom:1rem">Total: ₹${o.total}</div>
+        <div class="actions">
+          ${o.status === 'pending' ? `
+            <button class="btn btn-sm btn-blue" onclick="updateOrderStatus('${o.id}', 'accepted')">✅ Accept</button>
+            <button class="btn btn-sm btn-red" onclick="updateOrderStatus('${o.id}', 'cancelled')">❌ Cancel</button>
+          ` : ''}
+          ${o.status === 'accepted' ? `
+            <button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}', 'delivering')">🚚 Start Delivery</button>
+            <button class="btn btn-sm btn-red" onclick="updateOrderStatus('${o.id}', 'cancelled')">❌ Cancel</button>
+          ` : ''}
+          ${o.status === 'delivering' ? `
+            <button class="btn btn-sm btn-green" onclick="updateOrderStatus('${o.id}', 'delivered')">📦 Mark Delivered</button>
+          ` : ''}
+          ${(o.status === 'delivered' || o.status === 'cancelled') ? `
+            <button class="btn btn-sm btn-secondary" onclick="deleteOrder('${o.id}')">🗑️ Delete</button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateOrderStatus(id, status) {
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  order.status = status;
+  order.timeline.push({ status, time: new Date().toISOString() });
+  saveOrders();
+  renderAdminGrid();
+  toast(`Order ${id}: ${getStatusLabel(status)}`);
+}
+
+function deleteOrder(id) {
+  if (!confirm(`Order ${id} delete karna hai?`)) return;
+  orders = orders.filter(o => o.id !== id);
+  saveOrders();
+  renderAdminGrid();
+  toast('Order delete ho gaya');
+}
+
+// ===== INIT =====
+updateCartBadge();
+route();
+</script>
+</body>
+</html>
