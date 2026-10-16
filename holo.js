@@ -198,10 +198,37 @@
     el.appendChild(frag);
   }
 
+  /* ---------- 4. pointer-tracked 3D tilt on dish photos ---------- */
+  var tiltBound = false;
+  function bindTilt() {
+    if (tiltBound) return;
+    tiltBound = true;
+    document.addEventListener('pointermove', function (e) {
+      var t = e.target.closest && e.target.closest('.meal-art');
+      if (!t) return;
+      var r = t.getBoundingClientRect();
+      var px = (e.clientX - r.left) / r.width - .5;
+      var py = (e.clientY - r.top) / r.height - .5;
+      var img = t.querySelector('.dish-photo');
+      if (!img) return;
+      img.style.animation = 'none';
+      img.style.transform =
+        'rotateY(' + (px * 13).toFixed(2) + 'deg) rotateX(' +
+        (-py * 13).toFixed(2) + 'deg) translateZ(22px) scale(1.07)';
+    }, { passive: true });
+    document.addEventListener('pointerout', function (e) {
+      var t = e.target.closest && e.target.closest('.meal-art');
+      if (!t) return;
+      var img = t.querySelector('.dish-photo');
+      if (img) { img.style.transform = ''; img.style.animation = ''; }
+    }, { passive: true });
+  }
+
   /* ---------- boot: run now + again whenever a page renders ---------- */
   function bootHolo() {
     bootHoloCore();
     buildExtrude();
+    bindTilt();
   }
 
   window.holoBoot = bootHolo;

@@ -256,9 +256,10 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="food-art.js"></script>
+<script src="dish-photos.js"></script>
 <script src="holo.js"></script>
 <script>
-// ===== MEAL CARD RENDERER (3D food art) =====
+// ===== MEAL CARD RENDERER (3D food photo) =====
 function artFor(id) {
   const f = (typeof FOOD_ART !== 'undefined') && FOOD_ART[id];
   return f ? f() : '';
@@ -266,13 +267,24 @@ function artFor(id) {
 function tagClass(t) {
   return (typeof TAG_CLASS !== 'undefined' && TAG_CLASS[t]) || 'tag-veg';
 }
+function photoFor(id) {
+  return (typeof DISH_PHOTOS !== 'undefined') && DISH_PHOTOS[id] ? DISH_PHOTOS[id] : null;
+}
 
 function mealCard(item, featured) {
+  const ph = photoFor(item.id);
+  const art = ph
+    ? `<img class="dish-photo" src="img/${item.id}.webp"
+             alt="${item.name}"
+             loading="lazy" decoding="async"
+             style="background-image:url('${ph.lqip}');background-size:cover;background-position:center"
+             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'dish-fallback',innerHTML:'${artFor(item.id).replace(/'/g, "&#39;")}'}))">`
+    : `<div class="dish-fallback">${artFor(item.id)}</div>`;
   return `
     <div class="meal-card ${featured ? 'featured-day' : ''}">
-      <div class="meal-art">
+      <div class="meal-art" data-tilt>
         <div class="art-glow"></div>
-        <svg viewBox="0 0 220 150" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${artFor(item.id)}</svg>
+        ${art}
         <span class="art-tag ${tagClass(item.type)}">${item.type}</span>
       </div>
       <div class="meal-day">${item.day}</div>
