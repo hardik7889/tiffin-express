@@ -259,12 +259,12 @@ nav .cart-btn .badge {
 
 .meal-card:hover .meal-art svg { transform:scale(1.07) translateZ(26px); }
 .meal-day {
-  font-family:'Rajdhani',sans-serif; font-size:.70rem; letter-spacing:2px;
+  font-family:'Rajdhani',sans-serif; font-size:.80rem; letter-spacing:2px;
   text-transform:uppercase; color:#ffa07a; font-weight:700;
 }
-.meal-name { font-size:1.16rem; font-weight:700; color:#fff; }
-.meal-desc { color:var(--dim); font-size:.83rem; }
-.meal-price { color:var(--mint); font-family:'Orbitron',sans-serif; font-size:1.3rem; font-weight:800; }
+.meal-name { font-size:1.34rem; font-weight:700; color:#fff; }
+.meal-desc { color:var(--dim); font-size:.94rem; line-height:1.45; }
+.meal-price { color:var(--mint); font-family:'Orbitron',sans-serif; font-size:1.48rem; font-weight:800; }
 .meal-price small { color:var(--dim); font-weight:400; }
 .meal-foot { border-top:1px solid var(--line); }
 .meal-foot-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
@@ -360,8 +360,8 @@ nav .cart-btn .badge {
 .pkg-strip-card .ps-price { color:var(--mint); font-family:'Orbitron',sans-serif; }
 .pkg-strip-card .ps-name { font-family:'Orbitron',sans-serif; color:#fff; font-size:1.02rem; }
 .pkg-strip-card .ps-save { color:var(--mint); }
-.week-day-name { color:var(--cyan); font-family:'Rajdhani',sans-serif; letter-spacing:1.6px; }
-.week-meal { border-bottom:1px solid rgba(94,231,255,.08); color:#c8d4e8; }
+.week-day-name { color:var(--cyan); font-family:'Rajdhani',sans-serif; letter-spacing:1.6px; font-size:.92rem; font-weight:700; }
+.week-meal { border-bottom:1px solid rgba(94,231,255,.08); color:#c8d4e8; font-size:1rem; }
 
 /* small square 3D dish thumb inside a week row */
 .wm-thumb {
@@ -405,15 +405,16 @@ nav .cart-btn .badge {
   content:''; position:absolute; inset:0; z-index:3; border-radius:10px; pointer-events:none;
   background:linear-gradient(180deg, rgba(94,231,255,.20) 0%, transparent 34%);
 }
-.wm-tag { border:1px solid var(--line); color:var(--dim); font-family:'Rajdhani',sans-serif; }
-.wm-price { color:var(--mint); }
+.wm-tag { border:1px solid var(--line); color:var(--dim); font-family:'Rajdhani',sans-serif; font-size:.72rem; }
+.wm-price { color:var(--mint); font-size:1.05rem; font-weight:700; }
+.wm-name { font-weight:600; }
 .wm-buy {
   flex-shrink:0; margin-left:2px; white-space:nowrap;
   background:linear-gradient(135deg,#4ecca3,#00f0ff); color:#05060f;
   border:none; border-radius:7px; cursor:pointer;
-  font-family:'Orbitron',sans-serif; font-size:7.5px; font-weight:700;
+  font-family:'Orbitron',sans-serif; font-size:8.5px; font-weight:700;
   letter-spacing:.03em; text-transform:uppercase;
-  line-height:1.15; padding:5px 8px;
+  line-height:1.15; padding:6px 10px;
   box-shadow:0 0 10px rgba(78,204,163,.35);
   transition:transform .2s, box-shadow .2s;
 }
@@ -454,9 +455,9 @@ nav .cart-btn .badge {
   flex-shrink:0; margin-left:2px; white-space:nowrap;
   background:linear-gradient(135deg,#00f0ff,#7b2fff); color:#05060f;
   border:none; border-radius:7px; cursor:pointer;
-  font-family:'Orbitron',sans-serif; font-size:7.5px; font-weight:700;
+  font-family:'Orbitron',sans-serif; font-size:8.5px; font-weight:700;
   letter-spacing:.03em; text-transform:uppercase;
-  line-height:1.15; padding:5px 9px;
+  line-height:1.15; padding:6px 11px;
   box-shadow:0 0 10px rgba(0,240,255,.35);
   transition:transform .2s, box-shadow .2s, background .2s;
 }
@@ -466,12 +467,12 @@ nav .cart-btn .badge {
 /* per-row tick for multi-select */
 .wm-pick {
   flex-shrink:0; margin-left:2px;
-  width:20px; height:20px; padding:0; cursor:pointer;
+  width:24px; height:24px; padding:0; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  border-radius:6px; line-height:1;
+  border-radius:7px; line-height:1;
   background:rgba(5,6,15,.7);
   border:1.5px solid rgba(94,231,255,.42);
-  color:transparent; font-size:11px; font-weight:900;
+  color:transparent; font-size:13px; font-weight:900;
   transition:transform .2s, border-color .2s, background .2s, color .2s, box-shadow .2s;
 }
 .wm-pick:hover { transform:scale(1.12); border-color:var(--cyan); }
