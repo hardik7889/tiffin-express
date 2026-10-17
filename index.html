@@ -525,6 +525,35 @@ function dayTotal(pkg, day) {
   return pkg.mealTypes.reduce((s, m) => s + MENU[m].find(i => i.day === day).price, 0);
 }
 
+// day + meal type -> the menu item, so week rows can show its photo
+function itemFor(m, day) {
+  return MENU[m].find(i => i.day === day);
+}
+
+// small square 3D thumbnail for a week-menu row
+function weekThumb(m, day) {
+  const it = itemFor(m, day);
+  if (!it) return '';
+  const ph = photoFor(it.id);
+  const src = ph ? `src="img/${it.id}.webp"` : '';
+  return `<span class="wm-thumb" title="${it.name}">
+      <span class="wm-thumb-glow"></span>
+      <img ${src} alt="${it.name}" loading="lazy" decoding="async"
+           ${ph ? `style="background-image:url('${ph.lqip}');background-size:cover;background-position:center"` : ''}
+           onerror="this.style.display='none'">
+    </span>`;
+}
+
+function weekMealRow(m, day) {
+  const it = itemFor(m, day);
+  return `<div class="week-meal">
+    ${weekThumb(m, day)}
+    <span class="wm-tag">${MEAL_SHORT[m]}</span>
+    <span class="wm-name">${it.name}</span>
+    <span class="wm-price">₹${it.price}</span>
+  </div>`;
+}
+
 function weekTotal(pkg) {
   return DAYS.reduce((s, d) => s + dayTotal(pkg, d), 0);
 }
@@ -572,14 +601,7 @@ function renderPkgCard(p) {
         ${DAYS.map(day => `
           <div class="week-day">
             <div class="week-day-name">${day}</div>
-            ${p.mealTypes.map(m => {
-              const it = MENU[m].find(i => i.day === day);
-              return `<div class="week-meal">
-                <span class="wm-tag">${MEAL_SHORT[m]}</span>
-                <span class="wm-name">${it.name}</span>
-                <span class="wm-price">₹${it.price}</span>
-              </div>`;
-            }).join('')}
+            ${p.mealTypes.map(m => weekMealRow(m, day)).join('')}
             <div class="week-day-total">Day Total <b style="color:var(--text)">₹${dayTotal(p, day)}</b></div>
           </div>
         `).join('')}
@@ -615,18 +637,11 @@ function renderWeekBlock(p) {
           <div style="color:var(--green);font-size:0.8rem;font-weight:600">${p.save} bachat</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
         ${DAYS.map(day => `
           <div class="week-day">
             <div class="week-day-name">${day}</div>
-            ${p.mealTypes.map(m => {
-              const it = MENU[m].find(i => i.day === day);
-              return `<div class="week-meal">
-                <span class="wm-tag">${MEAL_SHORT[m]}</span>
-                <span class="wm-name">${it.name}</span>
-                <span class="wm-price">₹${it.price}</span>
-              </div>`;
-            }).join('')}
+            ${p.mealTypes.map(m => weekMealRow(m, day)).join('')}
             <div class="week-day-total">Day Total <b style="color:var(--text)">₹${dayTotal(p, day)}</b></div>
           </div>
         `).join('')}
