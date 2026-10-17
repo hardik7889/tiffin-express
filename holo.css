@@ -267,6 +267,17 @@ nav .cart-btn .badge {
 .meal-price { color:var(--mint); font-family:'Orbitron',sans-serif; font-size:1.3rem; font-weight:800; }
 .meal-price small { color:var(--dim); font-weight:400; }
 .meal-foot { border-top:1px solid var(--line); }
+.meal-foot-actions { display:flex; gap:6px; align-items:center; }
+.meal-foot .buy-btn {
+  background:linear-gradient(135deg,#4ecca3,#00f0ff); color:#05060f;
+  border:none; border-radius:9px;
+  font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700;
+  letter-spacing:.06em; text-transform:uppercase; padding:10px 14px;
+  box-shadow:0 0 14px rgba(78,204,163,.4);
+  transition:transform .2s, box-shadow .2s;
+}
+.meal-foot .buy-btn:hover { box-shadow:0 0 26px rgba(78,204,163,.8); transform:translateY(-1px); }
+.btn-green:hover { box-shadow:0 0 28px rgba(78,204,163,.7); }
 .meal-foot .add-btn {
   background:linear-gradient(135deg,#00f0ff,#7b2fff); color:#05060f;
   border:none; border-radius:9px;
@@ -374,6 +385,15 @@ nav .cart-btn .badge {
 }
 .wm-tag { border:1px solid var(--line); color:var(--dim); font-family:'Rajdhani',sans-serif; }
 .wm-price { color:var(--mint); }
+.wm-buy {
+  flex-shrink:0; margin-left:2px;
+  background:linear-gradient(135deg,#4ecca3,#00f0ff); color:#05060f;
+  border:none; border-radius:7px; cursor:pointer;
+  font-size:11px; line-height:1; padding:5px 7px;
+  box-shadow:0 0 10px rgba(78,204,163,.35);
+  transition:transform .2s, box-shadow .2s;
+}
+.wm-buy:hover { transform:scale(1.14); box-shadow:0 0 18px rgba(78,204,163,.8); }
 .week-day-total { color:var(--dim); }
 .week-day-total b { color:var(--cyan); }
 

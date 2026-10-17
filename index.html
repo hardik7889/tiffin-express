@@ -104,6 +104,8 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 .cart-item .qty-ctrl button { width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-size:1.1rem; display:flex; align-items:center; justify-content:center; }
 .cart-item .qty-ctrl .qty { font-weight:700; min-width:24px; text-align:center; }
 .cart-item .price { font-weight:700; color:var(--accent2); }
+.cart-item .cart-buy { flex-shrink:0; background:linear-gradient(135deg,#4ecca3,#00f0ff); color:#05060f; border:none; border-radius:9px; cursor:pointer; font-size:13px; line-height:1; padding:8px 11px; box-shadow:0 0 12px rgba(78,204,163,.35); transition:transform 0.2s, box-shadow 0.2s; }
+.cart-item .cart-buy:hover { transform:scale(1.1); box-shadow:0 0 20px rgba(78,204,163,.8); }
 .cart-summary { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin-top:1.5rem; }
 .cart-summary .row { display:flex; justify-content:space-between; padding:0.5rem 0; color:var(--muted); }
 .cart-summary .row.total { border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem; font-size:1.2rem; font-weight:800; color:var(--text); }
@@ -292,7 +294,10 @@ function mealCard(item, featured) {
       <div class="meal-desc">${item.desc}</div>
       <div class="meal-foot">
         <span class="meal-price">₹${item.price}<small> /plate</small></span>
-        <button class="add-btn" id="add-${item.id}" onclick="addToCart('${item.id}')">+ Add</button>
+        <div class="meal-foot-actions">
+          <button class="add-btn" id="add-${item.id}" onclick="addToCart('${item.id}')">+ Add</button>
+          <button class="buy-btn" onclick="buyNow('${item.id}')">⚡ Buy</button>
+        </div>
       </div>
     </div>
   `;
@@ -449,10 +454,11 @@ function renderPackages(app) {
             <div class="ps-meals">${p.meals} · ${p.desc}</div>
             <div class="ps-price">₹${p.weekNew}<small>/week</small></div>
             <div class="ps-save">${p.save} bachat · Monthly ₹${p.monthNew}</div>
-            <div style="display:flex;gap:0.5rem">
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
               <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','week')">Weekly</button>
               <button class="btn btn-green btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','month')">Monthly</button>
             </div>
+            <button class="btn btn-green btn-sm" style="width:100%;justify-content:center" onclick="buyPackageNow('${p.id}','week')">⚡ Buy Now ₹${p.weekNew}</button>
           </div>
         `).join('')}
       </div>
@@ -551,6 +557,7 @@ function weekMealRow(m, day) {
     <span class="wm-tag">${MEAL_SHORT[m]}</span>
     <span class="wm-name">${it.name}</span>
     <span class="wm-price">₹${it.price}</span>
+    <button class="wm-buy" onclick="buyNow('${it.id}')" title="Buy ${it.name} now">⚡</button>
   </div>`;
 }
 
@@ -592,6 +599,9 @@ function renderPkgCard(p) {
       <div class="pkg-actions">
         <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">Order Week ₹${p.weekNew}</button>
         <button class="btn btn-secondary btn-sm" onclick="orderPackage('${p.id}','month')">Month ₹${p.monthNew}</button>
+      </div>
+      <div class="pkg-actions">
+        <button class="btn btn-green btn-sm" style="flex:1" onclick="buyPackageNow('${p.id}','week')">⚡ Buy Weekly Now ₹${p.weekNew}</button>
       </div>
       <div class="toggle-hint" onclick="togglePkg('${p.id}')" style="cursor:pointer">
         <span class="arrow">▼</span> Poora weekly menu dekho
@@ -665,24 +675,34 @@ function togglePkg(id) {
 function orderPackage(id, period) {
   const p = PACKAGES.find(x => x.id === id);
   if (!p) return;
-  const price = period === 'week' ? p.weekNew : p.monthNew;
-  const cartId = 'pkg_' + p.id + '_' + period;
-  const existing = cart.find(c => c.id === cartId);
+  const item = pkgToItem(p, period);
+  const existing = cart.find(c => c.id === item.id);
   if (existing) existing.qty++;
-  else cart.push({
-    id: cartId,
+  else cart.push(item);
+  saveCart();
+  toast(`${p.name} (${period === 'week' ? 'weekly' : 'monthly'}) cart mein add ho gaya!`);
+}
+
+// package -> a cart-shaped line item
+function pkgToItem(p, period) {
+  return {
+    id: 'pkg_' + p.id + '_' + period,
     name: `${p.name} — ${period === 'week' ? 'Weekly' : 'Monthly'}`,
     desc: p.desc,
     day: period === 'week' ? '7 din' : '30 din',
     type: 'PACKAGE',
-    price: price,
+    price: period === 'week' ? p.weekNew : p.monthNew,
     qty: 1,
     isPackage: true,
     mealTypes: p.mealTypes,
     period: period,
-  });
-  saveCart();
-  toast(`${p.name} (${period === 'week' ? 'weekly' : 'monthly'}) cart mein add ho gaya!`);
+  };
+}
+
+function buyPackageNow(id, period) {
+  const p = PACKAGES.find(x => x.id === id);
+  if (!p) return;
+  showCheckout([pkgToItem(p, period)], true);
 }
 
 function selectPackage(id) {
@@ -756,6 +776,13 @@ function addToCart(id) {
 
 function goCart() { location.hash = '#/cart'; }
 
+// buy one line from the cart without touching the rest of it
+function buyCartItem(id) {
+  const item = cart.find(c => c.id === id);
+  if (!item) return;
+  showCheckout([{ ...item }], true);
+}
+
 function renderCart(app) {
   if (cart.length === 0) {
     app.innerHTML = `
@@ -788,6 +815,7 @@ function renderCart(app) {
             <button onclick="changeQty('${item.id}', 1)">+</button>
           </div>
           <div class="price">₹${item.price * item.qty}</div>
+          <button class="cart-buy" onclick="buyCartItem('${item.id}')" title="Sirf yeh item abhi kharido">⚡</button>
         </div>
       `).join('')}
       <div class="cart-summary">
@@ -812,27 +840,55 @@ function changeQty(id, delta) {
   renderCart(document.getElementById('app'));
 }
 
-function showCheckout() {
-  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+// items: array of cart-shaped objects. Defaults to the cart.
+// `single` marks a one-item instant buy: it must NOT empty the cart, so
+// only a full-cart checkout clears storage.
+function showCheckout(items, single) {
+  const list = Array.isArray(items) ? items : cart;
+  if (!list.length) { toast('Cart khaali hai!', 'error'); return; }
+  const isSingle = !!single;
+  const total = list.reduce((s, i) => s + i.price * i.qty, 0);
+  const summary = list.map(i =>
+    `<div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--muted);padding:0.2rem 0">
+       <span>${i.name} ×${i.qty}</span><span>₹${i.price * i.qty}</span>
+     </div>`).join('');
+
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.id = 'checkoutModal';
   modal.innerHTML = `
     <div class="modal" style="max-width:500px;text-align:left">
-      <h3>📋 Checkout</h3>
-      <p style="margin-bottom:1.5rem">Apna details bharo — order place ho jayega!</p>
+      <h3>📋 ${isSingle ? 'Buy Now' : 'Checkout'}</h3>
+      <p style="margin-bottom:1rem">Apna details bharo — order place ho jayega!</p>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1rem;margin-bottom:1.4rem">
+        ${summary}
+        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:0.5rem;padding-top:0.5rem;font-weight:800">
+          <span>Total</span><span style="color:var(--accent2)">₹${total}</span>
+        </div>
+      </div>
       <div class="form-group"><label>Naam *</label><input type="text" id="chkName" placeholder="Apna naam"></div>
       <div class="form-group"><label>Phone *</label><input type="tel" id="chkPhone" placeholder="10 digit phone number"></div>
       <div class="form-group"><label>Address *</label><textarea id="chkAddress" rows="3" placeholder="Delivery address (area, landmark)"></textarea></div>
       <div class="form-group"><label>Payment</label><select id="chkPayment"><option value="cod">Cash on Delivery</option><option value="upi">UPI</option><option value="card">Card</option></select></div>
       <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem">
         <button class="btn btn-secondary btn-sm" onclick="closeCheckout()">Cancel</button>
-        <button class="btn btn-primary btn-sm" onclick="placeOrder()">Place Order (₹${total})</button>
+        <button class="btn btn-primary btn-sm" id="placeBtn">Place Order (₹${total})</button>
       </div>
     </div>
   `;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('placeBtn').onclick = () => placeOrder(list, isSingle);
+}
+
+// Buy a single menu item straight away — no cart trip.
+function buyNow(id) {
+  for (const meal of Object.values(MENU)) {
+    const item = meal.find(i => i.id === id);
+    if (item) { showCheckout([{ ...item, qty: 1 }], true); return; }
+  }
+  const p = PACKAGES.find(x => 'pkg_' + x.id === id || x.id === id);
+  if (p) showCheckout([{ ...pkgToItem(p, 'week'), qty: 1 }], true);
 }
 
 function closeCheckout() {
@@ -840,19 +896,20 @@ function closeCheckout() {
   if (m) m.remove();
 }
 
-function placeOrder() {
+function placeOrder(items, fromSingle) {
   const name = document.getElementById('chkName').value.trim();
   const phone = document.getElementById('chkPhone').value.trim();
   const address = document.getElementById('chkAddress').value.trim();
   const payment = document.getElementById('chkPayment').value;
   if (!name || !phone || !address) { toast('Saare fields bharo!', 'error'); return; }
-  if (phone.length < 10) { toast('Valid phone number daalo!', 'error'); return; }
+  if (phone.replace(/\D/g, '').length < 10) { toast('Valid phone number daalo!', 'error'); return; }
 
-  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const list = items || cart;
+  const total = list.reduce((s, i) => s + i.price * i.qty, 0);
   const order = {
     id: genOrderId(),
     customer: { name, phone, address, payment },
-    items: [...cart],
+    items: list.map(i => ({ ...i })),
     total,
     status: 'pending',
     date: new Date().toISOString(),
@@ -860,8 +917,12 @@ function placeOrder() {
   };
   orders.unshift(order);
   saveOrders();
-  cart = [];
-  saveCart();
+
+  // only a full-cart checkout empties the cart
+  if (!fromSingle) {
+    cart = [];
+    saveCart();
+  }
   closeCheckout();
   toast(`Order place ho gaya! Order ID: ${order.id}`);
   location.hash = '#/orders';
