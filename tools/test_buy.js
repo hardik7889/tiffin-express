@@ -82,9 +82,12 @@ api.setCart([]);
 api.buyNow('l1');                          // Rajma Chawal, Rs 75
 const modal = nodes[nodes.length - 1];
 t('buyNow opens a checkout modal', !!modal);
-t('modal says Buy Now', /Buy Now/.test(modal.innerHTML));
+t('modal says Buy This Single', /Buy This Single/.test(modal.innerHTML));
 t('modal shows the item', /Rajma Chawal/.test(modal.innerHTML));
-t('modal shows correct total', /₹75/.test(modal.innerHTML));
+t('modal shows subtotal 75', /Subtotal/.test(modal.innerHTML) && /₹75/.test(modal.innerHTML));
+t('modal adds Rs 49 delivery', /₹49/.test(modal.innerHTML), 'no 49 found');
+t('modal total is 124 (75+49)', /₹124/.test(modal.innerHTML), modal.innerHTML.match(/₹\d+/g));
+t('single-note explains the charge', /single-note/.test(modal.innerHTML));
 t('cart untouched by buyNow', api.cart().length === 0, 'cart=' + api.cart().length);
 
 console.log('\n--- placing a single-item order ---');
@@ -94,7 +97,10 @@ document._els.chkAddress = { value: 'MG Road, Indore' };
 document._els.chkPayment = { value: 'cod' };
 api.placeOrder([{ id: 'l1', name: 'Rajma Chawal', price: 75, qty: 1 }], true);
 t('one order created', api.orders().length === 1, 'n=' + api.orders().length);
-t('order total is the single item', api.orders()[0] && api.orders()[0].total === 75);
+t('order total = item + 49 delivery', api.orders()[0] && api.orders()[0].total === 124, 'total=' + (api.orders()[0]||{}).total);
+t('order records the delivery charge', api.orders()[0] && api.orders()[0].delivery === 49);
+t('order records the subtotal', api.orders()[0] && api.orders()[0].subtotal === 75);
+t('order flagged singleBuy', api.orders()[0] && api.orders()[0].singleBuy === true);
 t('order starts pending', api.orders()[0] && api.orders()[0].status === 'pending');
 t('cart still empty after single buy', api.cart().length === 0);
 
@@ -104,7 +110,9 @@ api.setCart([{ id: 'l1', name: 'Rajma Chawal', price: 75, qty: 2 },
 api.showCheckout();                        // no args -> uses cart
 const m2 = nodes[nodes.length - 1];
 t('cart checkout says Checkout', /Checkout/.test(m2.innerHTML));
-t('cart total = 215', /₹215/.test(m2.innerHTML), m2.innerHTML.match(/₹\d+/g));
+t('cart total = 215 (delivery FREE)', /₹215/.test(m2.innerHTML), m2.innerHTML.match(/₹\d+/g));
+t('cart order shows FREE delivery', /FREE/.test(m2.innerHTML));
+t('cart order has no Rs 49', !/₹49/.test(m2.innerHTML));
 api.placeOrder(api.cart(), false);
 t('second order created', api.orders().length === 2);
 t('cart emptied by full checkout', api.cart().length === 0);
@@ -115,6 +123,8 @@ api.setCart([{ id: 'l1', name: 'Rajma Chawal', price: 75, qty: 2 },
 api.buyCartItem('d1');
 const m3 = nodes[nodes.length - 1];
 t('single-line modal shows only that line', /Mix Veg/.test(m3.innerHTML) && !/Rajma/.test(m3.innerHTML));
+t('single-line buy charges Rs 49', /₹49/.test(m3.innerHTML));
+t('single-line buy total = 114 (65+49)', /₹114/.test(m3.innerHTML), m3.innerHTML.match(/₹\d+/g));
 t('cart preserved when buying one line', api.cart().length === 2, 'cart=' + api.cart().length);
 
 console.log('\n--- package buy now ---');
@@ -122,6 +132,8 @@ api.setCart([]);
 api.buyPackageNow('full', 'week');
 const m4 = nodes[nodes.length - 1];
 t('package modal shows weekly price', /₹1499/.test(m4.innerHTML));
+t('package delivery is FREE (no Rs 49)', !/₹49/.test(m4.innerHTML) && /FREE/.test(m4.innerHTML));
+t('package total stays 1499', /₹1499/.test(m4.innerHTML));
 t('package cart untouched', api.cart().length === 0);
 
 console.log('\n--- orderPackage still adds to cart ---');

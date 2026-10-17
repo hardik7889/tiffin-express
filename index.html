@@ -104,8 +104,8 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 .cart-item .qty-ctrl button { width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-size:1.1rem; display:flex; align-items:center; justify-content:center; }
 .cart-item .qty-ctrl .qty { font-weight:700; min-width:24px; text-align:center; }
 .cart-item .price { font-weight:700; color:var(--accent2); }
-.cart-item .cart-buy { flex-shrink:0; background:linear-gradient(135deg,#4ecca3,#00f0ff); color:#05060f; border:none; border-radius:9px; cursor:pointer; font-size:13px; line-height:1; padding:8px 11px; box-shadow:0 0 12px rgba(78,204,163,.35); transition:transform 0.2s, box-shadow 0.2s; }
-.cart-item .cart-buy:hover { transform:scale(1.1); box-shadow:0 0 20px rgba(78,204,163,.8); }
+.cart-item .cart-buy { flex-shrink:0; white-space:nowrap; background:linear-gradient(135deg,#4ecca3,#00f0ff); color:#05060f; border:none; border-radius:9px; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:8.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; line-height:1.2; padding:8px 10px; box-shadow:0 0 12px rgba(78,204,163,.35); transition:transform 0.2s, box-shadow 0.2s; }
+.cart-item .cart-buy:hover { transform:scale(1.06); box-shadow:0 0 20px rgba(78,204,163,.8); }
 .cart-summary { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin-top:1.5rem; }
 .cart-summary .row { display:flex; justify-content:space-between; padding:0.5rem 0; color:var(--muted); }
 .cart-summary .row.total { border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem; font-size:1.2rem; font-weight:800; color:var(--text); }
@@ -296,7 +296,7 @@ function mealCard(item, featured) {
         <span class="meal-price">₹${item.price}<small> /plate</small></span>
         <div class="meal-foot-actions">
           <button class="add-btn" id="add-${item.id}" onclick="addToCart('${item.id}')">+ Add</button>
-          <button class="buy-btn" onclick="buyNow('${item.id}')">⚡ Buy</button>
+          <button class="buy-btn" onclick="buyNow('${item.id}')">⚡ Buy This Single</button>
         </div>
       </div>
     </div>
@@ -458,7 +458,7 @@ function renderPackages(app) {
               <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','week')">Weekly</button>
               <button class="btn btn-green btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','month')">Monthly</button>
             </div>
-            <button class="btn btn-green btn-sm" style="width:100%;justify-content:center" onclick="buyPackageNow('${p.id}','week')">⚡ Buy Now ₹${p.weekNew}</button>
+            <button class="btn btn-green btn-sm" style="width:100%;justify-content:center" onclick="buyPackageNow('${p.id}','week')">⚡ Buy This Single ₹${p.weekNew}</button>
           </div>
         `).join('')}
       </div>
@@ -557,7 +557,7 @@ function weekMealRow(m, day) {
     <span class="wm-tag">${MEAL_SHORT[m]}</span>
     <span class="wm-name">${it.name}</span>
     <span class="wm-price">₹${it.price}</span>
-    <button class="wm-buy" onclick="buyNow('${it.id}')" title="Buy ${it.name} now">⚡</button>
+    <button class="wm-buy" onclick="buyNow('${it.id}')" title="Buy ${it.name} now — single item, ₹49 delivery">⚡ Buy This Single</button>
   </div>`;
 }
 
@@ -601,7 +601,7 @@ function renderPkgCard(p) {
         <button class="btn btn-secondary btn-sm" onclick="orderPackage('${p.id}','month')">Month ₹${p.monthNew}</button>
       </div>
       <div class="pkg-actions">
-        <button class="btn btn-green btn-sm" style="flex:1" onclick="buyPackageNow('${p.id}','week')">⚡ Buy Weekly Now ₹${p.weekNew}</button>
+        <button class="btn btn-green btn-sm" style="flex:1" onclick="buyPackageNow('${p.id}','week')">⚡ Buy This Single ₹${p.weekNew}</button>
       </div>
       <div class="toggle-hint" onclick="togglePkg('${p.id}')" style="cursor:pointer">
         <span class="arrow">▼</span> Poora weekly menu dekho
@@ -815,13 +815,22 @@ function renderCart(app) {
             <button onclick="changeQty('${item.id}', 1)">+</button>
           </div>
           <div class="price">₹${item.price * item.qty}</div>
-          <button class="cart-buy" onclick="buyCartItem('${item.id}')" title="Sirf yeh item abhi kharido">⚡</button>
+          <button class="cart-buy" onclick="buyCartItem('${item.id}')" title="Sirf yeh item abhi kharido">⚡ Buy This Single</button>
         </div>
       `).join('')}
       <div class="cart-summary">
         <div class="row"><span>Subtotal</span><span>₹${total}</span></div>
-        <div class="row"><span>Delivery</span><span style="color:var(--green)">FREE (5km)</span></div>
-        <div class="row total"><span>Total</span><span>₹${total}</span></div>
+        <div class="row"><span>Delivery</span>${
+          cart.length === 1 && (cart[0].qty || 1) === 1 && !cart[0].isPackage
+            ? `<span style="color:var(--amber);font-weight:700">₹${SINGLE_DELIVERY}</span>`
+            : `<span style="color:var(--green)">FREE (5km)</span>`
+        }</div>
+        <div class="row total"><span>Total</span><span>₹${
+          total + (cart.length === 1 && (cart[0].qty || 1) === 1 && !cart[0].isPackage ? SINGLE_DELIVERY : 0)
+        }</span></div>
+        ${cart.length === 1 && (cart[0].qty || 1) === 1 && !cart[0].isPackage
+          ? `<div class="single-note">⚡ Sirf 1 item hai — ₹${SINGLE_DELIVERY} delivery lag raha hai. Ek aur item add karo to delivery FREE ho jayegi.</div>`
+          : ''}
       </div>
       <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap">
         <a href="#/menu" class="btn btn-secondary">← Menu</a>
@@ -840,14 +849,27 @@ function changeQty(id, delta) {
   renderCart(document.getElementById('app'));
 }
 
+// A single-item order carries a flat ₹49 delivery charge. Any order with
+// two or more lines — or a subscription package — stays free.
+const SINGLE_DELIVERY = 49;
+
+// Auto-detects a single-item order: exactly one non-package line, qty 1.
+// Pass `false` to force the free path (not currently used, kept for clarity).
+function isSingleBuy(list, single) {
+  if (single === false) return false;
+  return list.length === 1 && (list[0].qty || 1) === 1 && !list[0].isPackage;
+}
+
 // items: array of cart-shaped objects. Defaults to the cart.
-// `single` marks a one-item instant buy: it must NOT empty the cart, so
-// only a full-cart checkout clears storage.
+// `single` marks a one-item instant buy: it must NOT empty the cart, and it
+// carries the flat delivery charge.
 function showCheckout(items, single) {
   const list = Array.isArray(items) ? items : cart;
   if (!list.length) { toast('Cart khaali hai!', 'error'); return; }
-  const isSingle = !!single;
-  const total = list.reduce((s, i) => s + i.price * i.qty, 0);
+  const isSingle = isSingleBuy(list, single);
+  const sub = list.reduce((s, i) => s + i.price * i.qty, 0);
+  const delivery = isSingle ? SINGLE_DELIVERY : 0;
+  const total = sub + delivery;
   const summary = list.map(i =>
     `<div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--muted);padding:0.2rem 0">
        <span>${i.name} ×${i.qty}</span><span>₹${i.price * i.qty}</span>
@@ -858,10 +880,20 @@ function showCheckout(items, single) {
   modal.id = 'checkoutModal';
   modal.innerHTML = `
     <div class="modal" style="max-width:500px;text-align:left">
-      <h3>📋 ${isSingle ? 'Buy Now' : 'Checkout'}</h3>
+      <h3>📋 ${single ? 'Buy This Single' : 'Checkout'}</h3>
       <p style="margin-bottom:1rem">Apna details bharo — order place ho jayega!</p>
       <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1rem;margin-bottom:1.4rem">
         ${summary}
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--muted);padding:0.25rem 0;border-top:1px solid var(--border);margin-top:0.5rem">
+          <span>Subtotal</span><span>₹${sub}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.25rem 0">
+          <span style="color:var(--muted)">Delivery</span>
+          ${isSingle
+            ? `<span style="color:var(--amber);font-weight:700">₹${delivery}</span>`
+            : `<span style="color:var(--green);font-weight:700">FREE</span>`}
+        </div>
+        ${isSingle ? `<div class="single-note">⚡ Single item order — ₹${SINGLE_DELIVERY} delivery charge lagta hai. Package ya cart order par delivery FREE hai.</div>` : ''}
         <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:0.5rem;padding-top:0.5rem;font-weight:800">
           <span>Total</span><span style="color:var(--accent2)">₹${total}</span>
         </div>
@@ -905,11 +937,17 @@ function placeOrder(items, fromSingle) {
   if (phone.replace(/\D/g, '').length < 10) { toast('Valid phone number daalo!', 'error'); return; }
 
   const list = items || cart;
-  const total = list.reduce((s, i) => s + i.price * i.qty, 0);
+  const isSingle = isSingleBuy(list, fromSingle);
+  const sub = list.reduce((s, i) => s + i.price * i.qty, 0);
+  const delivery = isSingle ? SINGLE_DELIVERY : 0;
+  const total = sub + delivery;
   const order = {
     id: genOrderId(),
     customer: { name, phone, address, payment },
     items: list.map(i => ({ ...i })),
+    subtotal: sub,
+    delivery: delivery,
+    singleBuy: isSingle,
     total,
     status: 'pending',
     date: new Date().toISOString(),
@@ -960,9 +998,11 @@ function renderOrders(app) {
             </div>
             <div class="items">
               ${o.items.map(i => `<div class="item">${i.name} ×${i.qty} — ₹${i.price * i.qty}</div>`).join('')}
+              ${o.delivery ? `<div class="item" style="color:var(--amber)">🚚 Single item delivery — ₹${o.delivery}</div>` : ''}
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
               <span class="order-total">Total: ₹${o.total}</span>
+              ${o.singleBuy ? '<span class="single-tag">⚡ Single Item</span>' : ''}
               <span style="color:var(--muted);font-size:0.85rem">${o.customer.name} · ${o.customer.phone}</span>
             </div>
           </div>
@@ -1083,8 +1123,12 @@ function renderAdminGrid() {
         </div>
         <div style="margin-bottom:1rem">
           ${o.items.map(i => `<div style="color:var(--muted);font-size:0.85rem;padding:0.2rem 0">${i.name} ×${i.qty} — ₹${i.price * i.qty}</div>`).join('')}
+          ${o.delivery ? `<div style="color:var(--amber);font-size:0.85rem;padding:0.2rem 0">🚚 Delivery charge — ₹${o.delivery}</div>` : `<div style="color:var(--green);font-size:0.85rem;padding:0.2rem 0">🚚 Delivery — FREE</div>`}
         </div>
-        <div style="font-weight:700;color:var(--accent2);margin-bottom:1rem">Total: ₹${o.total}</div>
+        <div style="font-weight:700;color:var(--accent2);margin-bottom:1rem">
+          Total: ₹${o.total}
+          ${o.singleBuy ? '<span class="single-tag">⚡ Single Item</span>' : ''}
+        </div>
         <div class="actions">
           ${o.status === 'pending' ? `
             <button class="btn btn-sm btn-blue" onclick="updateOrderStatus('${o.id}', 'accepted')">✅ Accept</button>
