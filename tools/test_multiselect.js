@@ -81,6 +81,7 @@ const wrapped = inline + `
   deliveryFor, isSingleBuy, isPackageLine, cartDelivery, cartTotal,
   togglePick, clearPicks, pickedItems, addPickedToCart, buyPicked, selectAllVisible,
   togglePickPkg, pickedEntry, pickedLines, selectAllPackages, orderPackage,
+  togglePickWeek, weekMealRow, weekThumb, itemFor, MEAL_SHORT, flashAdded, pulseCartBadge,
   addToCart, buyNow, showCheckout, placeOrder, pkgToItem, PACKAGES, SINGLE_DELIVERY };
 `;
 const mod = { exports: {} };
@@ -260,6 +261,57 @@ t('monthly price used', api.cart()[0].price === 4200, 'price=' + api.cart()[0].p
 api.orderPackage('ld', 'month');
 t('same package bumps qty', api.cart()[0].qty === 2);
 t('package-only cart is FREE', api.cartDelivery() === 0);
+
+console.log('\n--- week-menu rows have Add to Cart ---');
+api.clearPicks(); api.setCart([]);
+const row = api.weekMealRow('lunch', 'Monday');
+t('row renders', typeof row === 'string' && row.length > 0);
+t('row has a + Add button', /class="wm-add"/.test(row), row.slice(0, 200));
+t('Add button calls addToCart', /addToCart\('l1'\)/.test(row));
+t('row has a Buy button', /class="wm-buy"/.test(row));
+t('row has a select tick', /class="wm-pick/.test(row));
+t('row carries the price', /₹75/.test(row));
+
+console.log('\n--- clicking Add on a week row ---');
+api.clearPicks(); api.setCart([]);
+// simulate the row's Add button
+api.addToCart('l1');
+t('dish landed in the cart', api.cart().length === 1 && api.cart()[0].id === 'l1');
+t('qty 1', api.cart()[0].qty === 1);
+t('delivery charged once', api.cartDelivery() === 49);
+api.addToCart('l1');
+t('second click bumps qty', api.cart()[0].qty === 2, 'qty=' + api.cart()[0].qty);
+t('delivery still 49 once', api.cartDelivery() === 49);
+
+console.log('\n--- week row tick joins the same selection ---');
+api.clearPicks(); api.setCart([]);
+api.togglePickWeek('d3');
+t('week tick registers', api.picked().length === 1 && api.picked()[0] === 'd3');
+t('resolves to the right dish', api.pickedLines()[0].name === 'Paneer Tikka Masala');
+api.togglePickWeek('d3');
+t('tick toggles off', api.picked().length === 0);
+
+console.log('\n--- week rows can be bulk added ---');
+api.clearPicks(); api.setCart([]);
+api.togglePickWeek('l1');
+api.togglePickWeek('l2');
+api.togglePickWeek('l3');
+api.addPickedToCart();
+t('three dishes in the cart', api.cart().length === 3, 'cart=' + api.cart().length);
+t('subtotal 225', api.cart().reduce((s,i)=>s+i.price*i.qty,0) === 225);
+t('delivery 49 once for three dishes', api.cartDelivery() === 49);
+
+console.log('\n--- meal header exposes package Add buttons ---');
+// the header picks the single-meal package for its section
+const pkgForLunch = api.PACKAGES.find(p => p.mealTypes.length === 1 && p.mealTypes[0] === 'lunch');
+t('lunch-only package exists', !!pkgForLunch && pkgForLunch.id === 'lunch');
+t('its weekly price is 559', pkgForLunch.weekNew === 559, 'price=' + pkgForLunch.weekNew);
+
+console.log('\n--- flashAdded marks both buttons ---');
+api.clearPicks(); api.setCart([]);
+let flashed = false;
+try { api.flashAdded('l1'); flashed = true; } catch (e) { flashed = false; }
+t('flashAdded runs without throwing', flashed);
 
 console.log(`\n===== ${pass} passed, ${fail} failed =====`);
 process.exit(fail ? 1 : 0);

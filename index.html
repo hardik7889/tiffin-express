@@ -328,12 +328,17 @@ function syncPickUI() {
     const btn = document.getElementById('pick-' + key);
     if (card) card.classList.add('picked');
     if (btn) { btn.classList.add('on'); btn.setAttribute('aria-pressed', 'true'); }
+    // week-menu rows on the packages page mirror the same selection
+    const row = document.getElementById('wrow-' + key);
+    const wb = document.getElementById('wpick-' + key);
+    if (row) row.classList.add('picked');
+    if (wb) { wb.classList.add('on'); wb.setAttribute('aria-pressed', 'true'); }
   });
-  document.querySelectorAll('.meal-card.picked, .pkg-card.picked').forEach(c => {
-    const key = c.id.replace(/^card-/, '');
+  document.querySelectorAll('.meal-card.picked, .pkg-card.picked, .pkg-strip-card.picked, .week-meal.picked').forEach(c => {
+    const key = c.id.replace(/^card-/, '').replace(/^wrow-/, '');
     if (!isPicked(key)) {
       c.classList.remove('picked');
-      const b = document.getElementById('pick-' + key);
+      const b = document.getElementById('pick-' + key) || document.getElementById('wpick-' + key);
       if (b) { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); }
     }
   });
@@ -342,8 +347,9 @@ function syncPickUI() {
 
 function clearPicks() {
   picked = [];
-  document.querySelectorAll('.meal-card.picked, .pkg-card.picked').forEach(c => c.classList.remove('picked'));
-  document.querySelectorAll('.pick.on').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); });
+  document.querySelectorAll('.meal-card.picked, .pkg-card.picked, .pkg-strip-card.picked, .week-meal.picked')
+    .forEach(c => c.classList.remove('picked'));
+  document.querySelectorAll('.pick.on, .wm-pick.on').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); });
   renderPickBar();
 }
 
@@ -452,6 +458,8 @@ function mealHeader(meal, title, icon, note, sub) {
   const week = items.reduce((s, i) => s + i.price, 0);
   const month = Math.round(week * 4.3);
   const perPlate = Math.min(...items.map(i => i.price));
+  const pkg = PACKAGES.find(p => p.mealTypes.length === 1 && p.mealTypes[0] === meal);
+  const pid = pkg ? pkg.id : null;
   return `
     <div class="meal-header">
       <div class="mh-left">
@@ -465,6 +473,11 @@ function mealHeader(meal, title, icon, note, sub) {
         <div class="mh-price">₹${perPlate}<small> /plate</small></div>
         <div class="mh-sub">₹${week}/week · ₹${month.toLocaleString('en-IN')}/month · free delivery</div>
         <span class="mh-badge">🚚 Free Delivery 5km</span>
+        ${pid ? `
+          <div class="mh-actions">
+            <button class="btn btn-primary btn-sm" onclick="orderPackage('${pid}','week')">🛒 Add Weekly ₹${week}</button>
+            <button class="btn btn-primary btn-sm" onclick="orderPackage('${pid}','month')">🛒 Add Monthly ₹${month.toLocaleString('en-IN')}</button>
+          </div>` : ''}
       </div>
     </div>
     <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.2rem">${note}</p>
@@ -742,13 +755,30 @@ function weekThumb(m, day) {
 
 function weekMealRow(m, day) {
   const it = itemFor(m, day);
-  return `<div class="week-meal">
+  const pickedNow = isPicked(it.id);
+  return `<div class="week-meal" id="wrow-${it.id}">
     ${weekThumb(m, day)}
     <span class="wm-tag">${MEAL_SHORT[m]}</span>
     <span class="wm-name">${it.name}</span>
     <span class="wm-price">₹${it.price}</span>
-    <button class="wm-buy" onclick="buyNow('${it.id}')" title="Buy ${it.name} now — single item, ₹49 delivery">⚡ Buy This Single</button>
+    <button class="wm-pick ${pickedNow ? 'on' : ''}" id="wpick-${it.id}"
+            onclick="togglePickWeek('${it.id}')"
+            title="Select karke ek saath buy karo">✓</button>
+    <button class="wm-add" onclick="addToCart('${it.id}')"
+            title="Cart mein daalo — ₹${it.price}">+ Add</button>
+    <button class="wm-buy" onclick="buyNow('${it.id}')"
+            title="Abhi kharido — ₹49 delivery">⚡ Buy</button>
   </div>`;
+}
+
+// Tick a single week row (same selection pool as the menu cards).
+function togglePickWeek(id) {
+  togglePick(id);
+  const row = document.getElementById('wrow-' + id);
+  const btn = document.getElementById('wpick-' + id);
+  const on = isPicked(id);
+  if (row) row.classList.toggle('picked', on);
+  if (btn) { btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
 }
 
 function weekTotal(pkg) {
@@ -841,7 +871,7 @@ function renderWeekBlock(p) {
           <div style="color:var(--green);font-size:0.8rem;font-weight:600">${p.save} bachat</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
+      <div class="week-grid">
         ${DAYS.map(day => `
           <div class="week-day">
             <div class="week-day-name">${day}</div>
@@ -1009,15 +1039,31 @@ function addToCart(id) {
       if (existing) existing.qty++;
       else cart.push({ ...item, qty: 1 });
       saveCart();
-      toast(`${item.name} cart mein add ho gaya!`);
-      const btn = document.getElementById('add-' + id);
-      if (btn) {
-        btn.classList.add('added');
-        btn.textContent = '✓ Added';
-        setTimeout(() => { btn.classList.remove('added'); btn.textContent = '+ Add'; }, 1200);
-      }
+      pulseCartBadge();
+      const delivery = cartDelivery();
+      toast(`🛒 ${item.name} cart mein add ho gaya — ₹${item.price} · delivery ${delivery ? 'ek baar ₹' + delivery : 'FREE'}`,
+            'success', 'cart');
+      flashAdded(id);
       return;
     }
+  }
+}
+
+// brief "✓ Added" state on whichever button added the dish
+function flashAdded(id) {
+  const btn = document.getElementById('add-' + id);
+  if (btn) {
+    btn.classList.add('added');
+    const prev = btn.textContent;
+    btn.textContent = '✓ Added';
+    setTimeout(() => { btn.classList.remove('added'); btn.textContent = prev; }, 1200);
+  }
+  const rowBtn = document.querySelector(`#wrow-${id} .wm-add`);
+  if (rowBtn) {
+    rowBtn.classList.add('added');
+    const prev = rowBtn.textContent;
+    rowBtn.textContent = '✓ Added';
+    setTimeout(() => { rowBtn.classList.remove('added'); rowBtn.textContent = prev; }, 1200);
   }
 }
 
