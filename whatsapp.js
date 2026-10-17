@@ -145,10 +145,34 @@
     return lines.join('\n');
   }
 
+  /* ---------- automatic send (server) ---------- */
+
+  // Try the backend first. It returns {ok:true, whatsapp:'sent'} on success.
+  // When the backend is unreachable or not configured, fall back to the
+  // one-tap WhatsApp hand-off.
+  function sendAuto(o) {
+    if (!o) return Promise.resolve({ ok: false, reason: 'no-order' });
+    var base = (typeof window.BACKEND_URL === 'string' && window.BACKEND_URL) || '';
+    if (!base) return Promise.resolve({ ok: false, reason: 'no-backend', fallback: 'click-to-chat' });
+    return fetch(base + '/api/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(o),
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (r.ok && j.ok && j.whatsapp === 'sent') return { ok: true, orderId: j.orderId };
+        return { ok: false, status: r.status, reason: j.error || 'send-failed', fallback: 'click-to-chat' };
+      });
+    }).catch(function (e) {
+      return { ok: false, reason: 'network', detail: String(e), fallback: 'click-to-chat' };
+    });
+  }
+
   window.WA = {
     buildMessage: buildMessage,
     customerMessage: customerMessage,
     sendOrder: sendOrder,
+    sendAuto: sendAuto,
     shareOrder: shareOrder,
     waLink: waLink,
     copyText: copyText,

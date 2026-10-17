@@ -1001,6 +1001,32 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
 .adm-wa { margin-top:0; margin-bottom:0.9rem; border-top:none; padding-top:0; }
 .wa-hint { font-size:.72rem; color:var(--amber); }
 
+/* ---- WhatsApp order + contact cards (home page) ---- */
+.contact-cards {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:1rem;
+}
+.contact-card {
+  position:relative; padding:1.6rem 1.4rem; border-radius:18px;
+  background:linear-gradient(135deg, rgba(37,211,102,.08), rgba(94,231,255,.05));
+  border:1px solid rgba(37,211,102,.3);
+  box-shadow:0 0 30px rgba(37,211,102,.08);
+  display:flex; flex-direction:column; align-items:center; gap:0.6rem;
+  text-align:center;
+  transition:transform .3s, box-shadow .3s;
+}
+.contact-card:hover {
+  transform:translateY(-4px);
+  box-shadow:0 0 40px rgba(37,211,102,.18);
+}
+.cc-ico { font-size:2.4rem; line-height:1; }
+.cc-name {
+  font-family:'Orbitron',sans-serif; font-size:1.05rem; font-weight:700;
+  color:#4ade80; letter-spacing:.02em;
+}
+.cc-role { font-size:.85rem; color:var(--dim); margin-top:-0.4rem; }
+.cc-wa { margin-top:0.6rem; width:100%; justify-content:center; }
+
 /* the shop's WhatsApp number setting in the admin panel */
 .wa-setting {
   display:flex; align-items:center; gap:0.9rem; flex-wrap:wrap;

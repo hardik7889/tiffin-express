@@ -264,6 +264,7 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 <script src="food-art.js"></script>
 <script src="dish-photos.js"></script>
 <script src="holo.js"></script>
+<script src="config.js"></script>
 <script src="notify.js"></script>
 <script src="location.js"></script>
 <script src="whatsapp.js"></script>
@@ -734,6 +735,31 @@ function renderHome(app) {
         <button class="btn btn-primary" onclick="submitHomeForm()">📞 Call Karo</button>
       </div>
     </section>
+
+    <section class="section" style="padding-top:0">
+      <h2>📲 WhatsApp par Direct Order</h2>
+      <p class="sub">WhatsApp par order karo — bina website form bharay!</p>
+      <div style="max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:1.2rem">
+
+        <div class="order-wa" style="justify-content:center;gap:1.5rem;flex-wrap:wrap">
+          <button class="wa-btn" style="font-size:11px;padding:14px 28px" onclick="whatsAppOrder()">
+            <span class="wa-ico" style="font-size:18px">📲</span> WhatsApp par Order Karo
+          </button>
+        </div>
+
+        <div class="contact-cards">
+          <div class="contact-card">
+            <div class="cc-ico">👨‍💼</div>
+            <div class="cc-name">Prof. Amarjeet Kumar</div>
+            <div class="cc-role">Order & Delivery</div>
+            <a class="wa-btn cc-wa" href="https://wa.me/918431246432?text=Assalamualaikum%2C%20main%20tiffin%20order%20karna%20chahta%20hoon">
+              <span class="wa-ico">💬</span> WhatsApp: 8431246432
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
   `;
 }
 
@@ -990,6 +1016,22 @@ function submitHomeForm() {
   if (!name || !phone) { toast('Naam aur phone number required hai!', 'error'); return; }
   const msg = document.getElementById('homeMsg').value.trim();
   toast(`📞 ${name}, hum ${phone} par call karenge!${msg ? ' Message: ' + msg : ''}`);
+}
+
+// WhatsApp par direct order — customer ko WhatsApp khul jata hai with a
+// pre-filled order template. Customer apna order type karke bhej deta hai.
+function whatsAppOrder() {
+  const msg = 'Assalamualaikum, main tiffin order karna chahta hoon.\n\n' +
+    'Naam: \n' +
+    'Phone: \n' +
+    'Address: \n' +
+    'Kya order karna hai (Breakfast/Lunch/Dinner/Package): \n' +
+    'Kitne din ke liye: \n' +
+    'Koi special instruction: \n\n' +
+    'TiffinExpress se bheja gaya 🙏';
+  const url = 'https://wa.me/918431246432?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank', 'noopener');
+  toast('📲 WhatsApp khul raha hai — apna order likh kar bhejo!');
 }
 
 function renderMenu(app) {
@@ -1299,11 +1341,18 @@ function placeOrder(items, opts) {
   closeCheckout();
   toast(`Order place ho gaya! Order ID: ${order.id}`);
   if (window.OrderNotify) window.OrderNotify.checkNow();
-  // hand the customer straight to WhatsApp with the order typed out
+  // try the automatic sender first; fall back to the one-tap hand-off
   if (window.WA) {
     lastOrderForWA = order.id;
-    window.WA.sendOrder(order);
-    toast('📲 WhatsApp khul raha hai — message bhej do, shop ko turant pata chal jayega', 'success');
+    window.WA.sendAuto(order).then(function (r) {
+      if (r.ok) {
+        toast('✅ WhatsApp par order bhej diya gaya!', 'success');
+      } else {
+        // server not configured or failed — open WhatsApp with the message
+        window.WA.sendOrder(order);
+        toast('📲 WhatsApp khul raha hai — message bhej do, shop ko turant pata chal jayega', 'success');
+      }
+    });
   }
   location.hash = '#/orders';
 }

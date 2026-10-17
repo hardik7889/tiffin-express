@@ -1,0 +1,33 @@
+# Netlify config: static site + one serverless function.
+#
+# `publish` is the repo root because the site is plain HTML/CSS/JS with no
+# build step. `functions` holds the WhatsApp sender.
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# The function is the only dynamic endpoint.
+[[redirects]]
+  from = "/api/notify-order"
+  to = "/.netlify/functions/notify-order"
+  status = 200
+
+# Sensible cache headers: images and vendored JS change rarely.
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
