@@ -284,7 +284,11 @@ function mealCard(item, featured) {
              onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'dish-fallback',innerHTML:'${artFor(item.id).replace(/'/g, "&#39;")}'}))">`
     : `<div class="dish-fallback">${artFor(item.id)}</div>`;
   return `
-    <div class="meal-card ${featured ? 'featured-day' : ''}">
+    <div class="meal-card ${featured ? 'featured-day' : ''}" id="card-${item.id}">
+      <button class="pick" id="pick-${item.id}" onclick="togglePick('${item.id}')"
+              title="Select karke ek saath buy karo" aria-label="Select ${item.name}">
+        <span class="pick-box">✓</span>
+      </button>
       <div class="meal-art" data-tilt>
         <div class="art-glow"></div>
         ${art}
@@ -302,6 +306,128 @@ function mealCard(item, featured) {
       </div>
     </div>
   `;
+}
+
+/* ---------- multi-select ---------- */
+
+// ids of dishes ticked for a bulk add / bulk buy
+let picked = [];
+
+function togglePick(id) {
+  const i = picked.indexOf(id);
+  if (i === -1) picked.push(id); else picked.splice(i, 1);
+  syncPickUI();
+}
+
+function isPicked(id) { return picked.indexOf(id) !== -1; }
+
+function syncPickUI() {
+  picked.forEach(id => {
+    const card = document.getElementById('card-' + id);
+    const btn = document.getElementById('pick-' + id);
+    if (card) card.classList.add('picked');
+    if (btn) { btn.classList.add('on'); btn.setAttribute('aria-pressed', 'true'); }
+  });
+  document.querySelectorAll('.meal-card.picked').forEach(c => {
+    const id = c.id.replace('card-', '');
+    if (!isPicked(id)) {
+      c.classList.remove('picked');
+      const b = document.getElementById('pick-' + id);
+      if (b) { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); }
+    }
+  });
+  renderPickBar();
+}
+
+function clearPicks() {
+  picked = [];
+  document.querySelectorAll('.meal-card.picked').forEach(c => c.classList.remove('picked'));
+  document.querySelectorAll('.pick.on').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); });
+  renderPickBar();
+}
+
+// Every menu item, looked up by id.
+function menuItemById(id) {
+  for (const meal of Object.values(MENU)) {
+    const it = meal.find(x => x.id === id);
+    if (it) return it;
+  }
+  return null;
+}
+
+function pickedItems() {
+  return picked.map(menuItemById).filter(Boolean);
+}
+
+function renderPickBar() {
+  const bar = document.getElementById('pickBar');
+  if (!bar) return;
+  const n = picked.length;
+  if (!n) {
+    bar.className = 'pick-bar';
+    bar.innerHTML = '';
+    return;
+  }
+  const items = pickedItems();
+  const sub = items.reduce((s, i) => s + i.price, 0);
+  const delivery = deliveryFor(items);
+  const total = sub + delivery;
+
+  bar.className = 'pick-bar show';
+  bar.innerHTML = `
+    <div class="pb-count">
+      <b>${n}</b> item${n > 1 ? 's' : ''} selected
+    </div>
+    <div class="pb-money">
+      <span>Subtotal ₹${sub}</span>
+      <span class="pb-del">${delivery ? `+ ₹${delivery} delivery (ek baar)` : 'Delivery FREE'}</span>
+      <b>Total ₹${total}</b>
+    </div>
+    <div class="pb-actions">
+      <button class="btn btn-sm btn-secondary" onclick="clearPicks()">Clear</button>
+      <button class="btn btn-sm btn-primary" onclick="addPickedToCart()">🛒 Add ${n} to Cart</button>
+      <button class="btn btn-sm btn-green" onclick="buyPicked()">⚡ Buy ${n} Now ₹${total}</button>
+    </div>
+  `;
+}
+
+// Add every ticked dish to the cart in one go.
+function addPickedToCart() {
+  const items = pickedItems();
+  if (!items.length) { toast('Pehle kuch items select karo', 'error'); return; }
+  let added = 0;
+  items.forEach(it => {
+    const existing = cart.find(c => c.id === it.id);
+    if (existing) existing.qty++;
+    else cart.push({ ...it, qty: 1 });
+    added++;
+  });
+  saveCart();
+  clearPicks();
+  toast(`🛒 ${added} item${added > 1 ? 's' : ''} cart mein add ho gaye — delivery sirf ek baar ₹${SINGLE_DELIVERY}`);
+}
+
+// Buy every ticked dish immediately, bypassing the cart.
+function buyPicked() {
+  const items = pickedItems().map(i => ({ ...i, qty: 1 }));
+  if (!items.length) { toast('Pehle kuch items select karo', 'error'); return; }
+  const snapshot = items;
+  showCheckout(snapshot, { fromSelection: true });
+  // clear the ticks once the order is actually placed
+  const btn = document.getElementById('placeBtn');
+  if (btn) {
+    const prev = btn.onclick;
+    btn.onclick = () => { const r = prev && prev(); clearPicks(); return r; };
+  }
+}
+
+// select-all / clear for the whole menu page
+function selectAllVisible() {
+  const ids = [];
+  ['breakfast', 'lunch', 'dinner'].forEach(m => MENU[m].forEach(i => ids.push(i.id)));
+  picked = ids;
+  syncPickUI();
+  toast(`${ids.length} items select ho gaye`);
 }
 
 function mealHeader(meal, title, icon, note, sub) {
@@ -449,6 +575,12 @@ function route() {
   if (r !== 'admin' && window.OrderNotify) window.OrderNotify.unmount();
   // arriving at the admin panel arms the ring straight away, no button press
   if (r === 'admin' && window.OrderNotify) window.OrderNotify.mount();
+  // the selection bar belongs to the menu page only
+  if (r !== 'menu') {
+    picked = [];
+    const bar = document.getElementById('pickBar');
+    if (bar) { bar.className = 'pick-bar'; bar.innerHTML = ''; }
+  }
   if (typeof window.holoBoot === 'function') window.holoBoot();
   window.scrollTo(0,0);
 }
@@ -736,13 +868,20 @@ function submitHomeForm() {
 
 function renderMenu(app) {
   const feat = todayName();
+  picked = [];   // fresh page, fresh selection
   app.innerHTML = `
     <div class="page" style="max-width:1200px">
       <h2 style="margin-bottom:0.4rem">🍽️ Full Menu — Weekly Thali Plan</h2>
-      <p style="color:var(--muted);margin-bottom:2rem">Monday se Sunday, har din ka fresh thali. Koi bhi meal add karo cart mein — ya poora weekly plan order karo.</p>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Monday se Sunday, har din ka fresh thali. Card par <b>✓</b> dabaake kai items select karo, phir ek saath cart mein daalo ya buy karo — <b>delivery sirf ek baar ₹${SINGLE_DELIVERY}</b>.</p>
 
-      <div class="menu-tabs" style="margin-bottom:2.5rem">
-        ${['breakfast','lunch','dinner'].map(m => `<button class="menu-tab ${m === 'breakfast' ? 'active' : ''}" onclick="jumpMeal('${m}')">${MEAL_LABEL[m]}</button>`).join('')}
+      <div class="menu-toolbar">
+        <div class="menu-tabs" style="margin:0">
+          ${['breakfast','lunch','dinner'].map(m => `<button class="menu-tab ${m === 'breakfast' ? 'active' : ''}" onclick="jumpMeal('${m}')">${MEAL_LABEL[m]}</button>`).join('')}
+        </div>
+        <div class="menu-tools">
+          <button class="btn btn-sm btn-secondary" onclick="selectAllVisible()">☑️ Select All</button>
+          <button class="btn btn-sm btn-secondary" onclick="clearPicks()">Clear</button>
+        </div>
       </div>
 
       <div id="sec-breakfast">${mealSection('breakfast', 'Breakfast', '🍱',
@@ -761,7 +900,9 @@ function renderMenu(app) {
         <a href="#/packages" class="btn btn-primary">💎 Poora Weekly Package Dekho</a>
       </div>
     </div>
+    <div class="pick-bar" id="pickBar"></div>
   `;
+  renderPickBar();
 }
 
 function jumpMeal(m) {
@@ -836,22 +977,23 @@ function renderCart(app) {
         </div>
       `).join('')}
       <div class="cart-summary">
-        <div class="row"><span>Subtotal</span><span>₹${total}</span></div>
+        <div class="row"><span>Subtotal (${cart.reduce((s,i) => s + i.qty, 0)} items)</span><span>₹${total}</span></div>
         <div class="row"><span>Delivery</span>${
-          cart.length === 1 && (cart[0].qty || 1) === 1 && !cart[0].isPackage
-            ? `<span style="color:var(--amber);font-weight:700">₹${SINGLE_DELIVERY}</span>`
-            : `<span style="color:var(--green)">FREE (5km)</span>`
+          cartDelivery() === 0
+            ? `<span style="color:var(--green);font-weight:700">FREE</span>`
+            : `<span style="color:var(--amber);font-weight:700">₹${cartDelivery()}</span>`
         }</div>
-        <div class="row total"><span>Total</span><span>₹${
-          total + (cart.length === 1 && (cart[0].qty || 1) === 1 && !cart[0].isPackage ? SINGLE_DELIVERY : 0)
-        }</span></div>
-        ${cart.length === 1 && (cart[0].qty || 1) === 1 && !cart[0].isPackage
-          ? `<div class="single-note">⚡ Sirf 1 item hai — ₹${SINGLE_DELIVERY} delivery lag raha hai. Ek aur item add karo to delivery FREE ho jayegi.</div>`
-          : ''}
+        <div class="row total"><span>Total</span><span>₹${total + cartDelivery()}</span></div>
+        ${cartDelivery() > 0
+          ? `<div class="single-note">🚚 ₹${SINGLE_DELIVERY} delivery — poori order par <b>sirf ek baar</b>. Items kitne bhi add karo, charge same rahega.</div>`
+          : `<div class="single-note" style="color:var(--green);border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.08)">✅ Package order — delivery included, kuch extra nahi</div>`}
       </div>
       <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap">
         <a href="#/menu" class="btn btn-secondary">← Menu</a>
         <button class="btn btn-primary" onclick="showCheckout()" style="flex:1;justify-content:center">Checkout →</button>
+      </div>
+      <div style="margin-top:1rem;text-align:center">
+        <a href="#/menu" style="color:var(--cyan);font-size:0.85rem">+ Aur items select karke add karo (delivery same rahega)</a>
       </div>
     </div>
   `;
@@ -866,27 +1008,48 @@ function changeQty(id, delta) {
   renderCart(document.getElementById('app'));
 }
 
-// A single-item order carries a flat ₹49 delivery charge. Any order with
-// two or more lines — or a subscription package — stays free.
+// Delivery is a flat ₹49 per ORDER — not per item. Select ten dishes and you
+// still pay ₹49 once. Package subscriptions already include delivery, so an
+// order made only of packages ships free.
 const SINGLE_DELIVERY = 49;
 
-// Auto-detects a single-item order: exactly one non-package line, qty 1.
-// Pass `false` to force the free path (not currently used, kept for clarity).
-function isSingleBuy(list, single) {
-  if (single === false) return false;
-  return list.length === 1 && (list[0].qty || 1) === 1 && !list[0].isPackage;
+// A package line already has delivery baked into its price.
+function isPackageLine(i) { return !!(i && i.isPackage); }
+
+// Delivery applies when the order has at least one non-package line.
+// Only packages in the basket -> free.
+function deliveryFor(list) {
+  if (!list || !list.length) return 0;
+  return list.some(i => !isPackageLine(i)) ? SINGLE_DELIVERY : 0;
+}
+
+// Kept for callers/tests that ask "is this a one-item order".
+function isSingleBuy(list) {
+  return list.length === 1 && (list[0].qty || 1) === 1 && !isPackageLine(list[0]);
+}
+
+// Convenience wrappers over the live cart.
+function cartDelivery() { return deliveryFor(cart); }
+function cartTotal() {
+  return cart.reduce((s, i) => s + i.price * i.qty, 0) + cartDelivery();
 }
 
 // items: array of cart-shaped objects. Defaults to the cart.
-// `single` marks a one-item instant buy: it must NOT empty the cart, and it
-// carries the flat delivery charge.
-function showCheckout(items, single) {
+// `opts.single` marks a one-item instant buy: it must NOT empty the cart.
+// `opts.fromSelection` marks a bulk buy of hand-picked dishes.
+function showCheckout(items, opts) {
+  const o = (typeof opts === 'object' && opts) ? opts : { single: !!opts };
   const list = Array.isArray(items) ? items : cart;
   if (!list.length) { toast('Cart khaali hai!', 'error'); return; }
-  const isSingle = isSingleBuy(list, single);
+
   const sub = list.reduce((s, i) => s + i.price * i.qty, 0);
-  const delivery = isSingle ? SINGLE_DELIVERY : 0;
+  const delivery = deliveryFor(list);
   const total = sub + delivery;
+  const free = delivery === 0;
+  const count = list.reduce((s, i) => s + (i.qty || 1), 0);
+
+  const title = o.fromSelection ? '🛒 Buy Selected Items'
+              : o.single ? 'Buy This Single' : 'Checkout';
   const summary = list.map(i =>
     `<div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--muted);padding:0.2rem 0">
        <span>${i.name} ×${i.qty}</span><span>₹${i.price * i.qty}</span>
@@ -897,20 +1060,22 @@ function showCheckout(items, single) {
   modal.id = 'checkoutModal';
   modal.innerHTML = `
     <div class="modal" style="max-width:500px;text-align:left">
-      <h3>📋 ${single ? 'Buy This Single' : 'Checkout'}</h3>
-      <p style="margin-bottom:1rem">Apna details bharo — order place ho jayega!</p>
-      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1rem;margin-bottom:1.4rem">
+      <h3>📋 ${title}</h3>
+      <p style="margin-bottom:1rem">${count} item${count > 1 ? 's' : ''} — apna details bharo</p>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1rem;margin-bottom:1.4rem;max-height:220px;overflow:auto">
         ${summary}
         <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--muted);padding:0.25rem 0;border-top:1px solid var(--border);margin-top:0.5rem">
           <span>Subtotal</span><span>₹${sub}</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.25rem 0">
           <span style="color:var(--muted)">Delivery</span>
-          ${isSingle
-            ? `<span style="color:var(--amber);font-weight:700">₹${delivery}</span>`
-            : `<span style="color:var(--green);font-weight:700">FREE</span>`}
+          ${free
+            ? `<span style="color:var(--green);font-weight:700">FREE</span>`
+            : `<span style="color:var(--amber);font-weight:700">₹${delivery}</span>`}
         </div>
-        ${isSingle ? `<div class="single-note">⚡ Single item order — ₹${SINGLE_DELIVERY} delivery charge lagta hai. Package ya cart order par delivery FREE hai.</div>` : ''}
+        ${free
+          ? `<div class="single-note" style="color:var(--green);border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.08)">✅ Package order — delivery included, kuch extra nahi</div>`
+          : `<div class="single-note">🚚 ₹${SINGLE_DELIVERY} delivery — poori order par <b>sirf ek baar</b> lagta hai, item kitne bhi ho</div>`}
         <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:0.5rem;padding-top:0.5rem;font-weight:800">
           <span>Total</span><span style="color:var(--accent2)">₹${total}</span>
         </div>
@@ -927,17 +1092,17 @@ function showCheckout(items, single) {
   `;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-  document.getElementById('placeBtn').onclick = () => placeOrder(list, isSingle);
+  document.getElementById('placeBtn').onclick = () => placeOrder(list, o);
 }
 
 // Buy a single menu item straight away — no cart trip.
 function buyNow(id) {
   for (const meal of Object.values(MENU)) {
     const item = meal.find(i => i.id === id);
-    if (item) { showCheckout([{ ...item, qty: 1 }], true); return; }
+    if (item) { showCheckout([{ ...item, qty: 1 }], { single: true }); return; }
   }
   const p = PACKAGES.find(x => 'pkg_' + x.id === id || x.id === id);
-  if (p) showCheckout([{ ...pkgToItem(p, 'week'), qty: 1 }], true);
+  if (p) showCheckout([{ ...pkgToItem(p, 'week'), qty: 1 }], { single: true });
 }
 
 function closeCheckout() {
@@ -945,7 +1110,10 @@ function closeCheckout() {
   if (m) m.remove();
 }
 
-function placeOrder(items, fromSingle) {
+// `opts` mirrors showCheckout: { single, fromSelection }. Anything other than
+// an instant buy clears the cart afterwards.
+function placeOrder(items, opts) {
+  const o = (typeof opts === 'object' && opts) ? opts : { single: !!opts };
   const name = document.getElementById('chkName').value.trim();
   const phone = document.getElementById('chkPhone').value.trim();
   const address = document.getElementById('chkAddress').value.trim();
@@ -954,9 +1122,8 @@ function placeOrder(items, fromSingle) {
   if (phone.replace(/\D/g, '').length < 10) { toast('Valid phone number daalo!', 'error'); return; }
 
   const list = items || cart;
-  const isSingle = isSingleBuy(list, fromSingle);
   const sub = list.reduce((s, i) => s + i.price * i.qty, 0);
-  const delivery = isSingle ? SINGLE_DELIVERY : 0;
+  const delivery = deliveryFor(list);
   const total = sub + delivery;
   const order = {
     id: genOrderId(),
@@ -964,7 +1131,7 @@ function placeOrder(items, fromSingle) {
     items: list.map(i => ({ ...i })),
     subtotal: sub,
     delivery: delivery,
-    singleBuy: isSingle,
+    singleBuy: isSingleBuy(list),
     total,
     status: 'pending',
     date: new Date().toISOString(),
@@ -973,8 +1140,9 @@ function placeOrder(items, fromSingle) {
   orders.unshift(order);
   saveOrders();
 
-  // only a full-cart checkout empties the cart
-  if (!fromSingle) {
+  // an instant buy leaves the cart alone; a checkout or a bulk selection
+  // consumes what it ordered
+  if (!o.single) {
     cart = [];
     saveCart();
   }

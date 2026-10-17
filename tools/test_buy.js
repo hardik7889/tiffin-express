@@ -110,11 +110,13 @@ api.setCart([{ id: 'l1', name: 'Rajma Chawal', price: 75, qty: 2 },
 api.showCheckout();                        // no args -> uses cart
 const m2 = nodes[nodes.length - 1];
 t('cart checkout says Checkout', /Checkout/.test(m2.innerHTML));
-t('cart total = 215 (delivery FREE)', /₹215/.test(m2.innerHTML), m2.innerHTML.match(/₹\d+/g));
-t('cart order shows FREE delivery', /FREE/.test(m2.innerHTML));
-t('cart order has no Rs 49', !/₹49/.test(m2.innerHTML));
+t('cart subtotal 215 shown', /₹215/.test(m2.innerHTML), m2.innerHTML.match(/₹\d+/g));
+t('cart order charges Rs 49 delivery once', /₹49/.test(m2.innerHTML));
+t('cart total is 264 (215 + 49)', /₹264/.test(m2.innerHTML), m2.innerHTML.match(/₹\d+/g));
 api.placeOrder(api.cart(), false);
 t('second order created', api.orders().length === 2);
+t('order records the flat delivery once', api.orders()[0].delivery === 49, 'del=' + api.orders()[0].delivery);
+t('order total includes it once', api.orders()[0].total === 264, 'total=' + api.orders()[0].total);
 t('cart emptied by full checkout', api.cart().length === 0);
 
 console.log('\n--- buy one line out of the cart ---');

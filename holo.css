@@ -667,6 +667,81 @@ nav .cart-btn .badge {
   .notif-actions { justify-content:center; }
 }
 
+/* ===== MULTI-SELECT (pick dishes, then add or buy together) ===== */
+.meal-card { position:relative; }
+
+.pick {
+  position:absolute; top:10px; left:10px; z-index:6;
+  width:30px; height:30px; padding:0; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:9px;
+  background:rgba(5,6,15,.72);
+  border:1.5px solid rgba(94,231,255,.45);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  transition:transform .2s, border-color .2s, background .2s, box-shadow .2s;
+}
+.pick:hover { transform:scale(1.1); border-color:var(--cyan); box-shadow:0 0 14px rgba(94,231,255,.5); }
+.pick .pick-box {
+  font-size:15px; font-weight:900; line-height:1;
+  color:transparent; transition:color .2s;
+}
+.pick.on {
+  background:linear-gradient(135deg,#4ecca3,#00f0ff);
+  border-color:transparent;
+  box-shadow:0 0 18px rgba(78,204,163,.75);
+}
+.pick.on .pick-box { color:#05060f; }
+
+/* the whole card reads as selected */
+.meal-card.picked {
+  border-color:var(--mint);
+  box-shadow:0 0 0 1px rgba(78,204,163,.55), 0 0 32px rgba(78,204,163,.22);
+}
+.meal-card.picked::before {
+  content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:linear-gradient(150deg, rgba(78,204,163,.10), transparent 55%);
+}
+
+.menu-toolbar {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:1rem; flex-wrap:wrap; margin-bottom:2.2rem;
+}
+.menu-tools { display:flex; gap:0.5rem; flex-wrap:wrap; }
+
+/* sticky bar that appears once something is ticked */
+.pick-bar {
+  position:fixed; left:0; right:0; bottom:0; z-index:1500;
+  display:none;
+  align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+  padding:0.9rem 1.5rem;
+  background:rgba(4,1,13,.94);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid rgba(0,240,255,.28);
+  box-shadow:0 -14px 44px rgba(0,0,0,.6);
+  animation:pickUp .32s cubic-bezier(.2,.9,.2,1);
+}
+.pick-bar.show { display:flex; }
+@keyframes pickUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+
+.pb-count { font-family:'Rajdhani',sans-serif; font-size:.95rem; color:var(--dim); }
+.pb-count b {
+  font-family:'Orbitron',sans-serif; font-size:1.25rem; color:var(--cyan);
+  text-shadow:0 0 16px rgba(94,231,255,.5); margin-right:0.2rem;
+}
+.pb-money { display:flex; align-items:center; gap:1.2rem; flex-wrap:wrap; font-size:.85rem; color:var(--dim); }
+.pb-money .pb-del { color:var(--amber); }
+.pb-money b {
+  font-family:'Orbitron',sans-serif; font-size:1.1rem; color:var(--accent2);
+}
+.pb-actions { display:flex; gap:0.5rem; flex-wrap:wrap; }
+
+@media (max-width:780px) {
+  .pick-bar { padding:0.8rem 1rem; }
+  .pb-money { gap:0.7rem; font-size:.78rem; }
+  .pb-actions { width:100%; }
+  .pb-actions .btn { flex:1; justify-content:center; }
+}
+
 /* ---------- 3D extruded eyebrow (per-letter arc) ---------- */
 .eyebrow-3d {
   display:inline-block; white-space:nowrap;
