@@ -621,6 +621,52 @@ nav .cart-btn .badge {
   .adm-stat .n { font-size:1.1rem; }
 }
 
+/* ===== ORDER NOTIFICATION BAR ===== */
+.notif-bar {
+  display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+  padding:1rem 1.2rem; border-radius:16px; margin-bottom:1.4rem;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  transition:border-color .3s, box-shadow .3s;
+}
+.notif-bar.on {
+  background:linear-gradient(120deg, rgba(78,204,163,.14), rgba(94,231,255,.08));
+  border:1px solid rgba(78,204,163,.45);
+  box-shadow:0 0 26px rgba(78,204,163,.18);
+}
+.notif-bar.off {
+  background:linear-gradient(120deg, rgba(255,82,82,.10), rgba(255,94,200,.06));
+  border:1px solid rgba(255,82,82,.35);
+}
+.notif-ico {
+  font-size:1.7rem; line-height:1; flex-shrink:0;
+  animation:bellSwing 3.2s ease-in-out infinite;
+}
+.notif-bar.off .notif-ico { animation:none; opacity:.65; }
+@keyframes bellSwing {
+  0%, 62%, 100% { transform:rotate(0deg); }
+  70% { transform:rotate(13deg); }
+  78% { transform:rotate(-11deg); }
+  86% { transform:rotate(7deg); }
+  94% { transform:rotate(-4deg); }
+}
+.notif-txt { flex:1; min-width:200px; display:flex; flex-direction:column; gap:0.15rem; }
+.notif-txt b {
+  font-family:'Orbitron',sans-serif; font-size:.86rem; letter-spacing:.02em;
+  color:#fff;
+}
+.notif-bar.on .notif-txt b { color:var(--mint); }
+.notif-bar.off .notif-txt b { color:#ff8fa3; }
+.notif-txt span { font-size:.8rem; color:var(--dim); }
+.notif-txt .notif-perm { font-size:.72rem; color:var(--muted); opacity:.85; }
+.notif-actions { display:flex; gap:0.5rem; flex-wrap:wrap; }
+
+/* the desktop notification for a new order */
+@media (max-width:620px) {
+  .notif-bar { flex-direction:column; align-items:stretch; text-align:center; }
+  .notif-ico { align-self:center; }
+  .notif-actions { justify-content:center; }
+}
+
 /* ---------- 3D extruded eyebrow (per-letter arc) ---------- */
 .eyebrow-3d {
   display:inline-block; white-space:nowrap;

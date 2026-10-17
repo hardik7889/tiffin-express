@@ -260,6 +260,7 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 <script src="food-art.js"></script>
 <script src="dish-photos.js"></script>
 <script src="holo.js"></script>
+<script src="notify.js"></script>
 <script>
 // ===== MEAL CARD RENDERER (3D food photo) =====
 function artFor(id) {
@@ -397,7 +398,19 @@ const ADMIN_PASSWORD = 'admin123';
 let orders = JSON.parse(localStorage.getItem('tiffin_orders') || '[]');
 let cart = JSON.parse(localStorage.getItem('tiffin_cart') || '[]');
 
-function saveOrders() { localStorage.setItem('tiffin_orders', JSON.stringify(orders)); }
+function saveOrders() {
+  localStorage.setItem('tiffin_orders', JSON.stringify(orders));
+}
+
+// Another tab may have written new orders; pull them into this tab's memory
+// so the admin grid can render them without a manual reload.
+function reloadOrders() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('tiffin_orders') || '[]');
+    if (Array.isArray(raw)) orders = raw;
+  } catch (e) { /* keep the in-memory list if storage is unreadable */ }
+}
+window.reloadOrders = reloadOrders;
 function saveCart() { localStorage.setItem('tiffin_cart', JSON.stringify(cart)); updateCartBadge(); }
 function updateCartBadge() {
   const b = document.getElementById('cartBadge');
@@ -432,6 +445,8 @@ function route() {
   else if (r === 'orders') renderOrders(app);
   else if (r === 'admin') renderAdmin(app);
   else renderHome(app);
+  // stop the order watcher as soon as the admin panel leaves the screen
+  if (r !== 'admin' && window.OrderNotify) window.OrderNotify.unmount();
   if (typeof window.holoBoot === 'function') window.holoBoot();
   window.scrollTo(0,0);
 }
@@ -963,6 +978,7 @@ function placeOrder(items, fromSingle) {
   }
   closeCheckout();
   toast(`Order place ho gaya! Order ID: ${order.id}`);
+  if (window.OrderNotify) window.OrderNotify.checkNow();
   location.hash = '#/orders';
 }
 
@@ -1067,6 +1083,8 @@ function renderAdmin(app) {
         <div class="adm-stat"><div class="n" style="color:var(--mint)">₹${revenue.toLocaleString('en-IN')}</div><div class="l">Revenue</div></div>
       </div>
 
+      <div id="notifBar"></div>
+
       <div class="adm-toolbar">
         <div class="adm-filters">
           ${['all','pending','accepted','delivering','delivered','cancelled'].map(s => `
@@ -1086,6 +1104,7 @@ function renderAdmin(app) {
   `;
   window._adminFilter = 'all';
   renderAdminGrid();
+  if (window.OrderNotify) window.OrderNotify.mount();
 }
 
 function statusCounts() {
