@@ -266,6 +266,7 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 <script src="holo.js"></script>
 <script src="notify.js"></script>
 <script src="location.js"></script>
+<script src="whatsapp.js"></script>
 <script>
 // ===== MEAL CARD RENDERER (3D food photo) =====
 function artFor(id) {
@@ -1298,7 +1299,67 @@ function placeOrder(items, opts) {
   closeCheckout();
   toast(`Order place ho gaya! Order ID: ${order.id}`);
   if (window.OrderNotify) window.OrderNotify.checkNow();
+  // hand the customer straight to WhatsApp with the order typed out
+  if (window.WA) {
+    lastOrderForWA = order.id;
+    window.WA.sendOrder(order);
+    toast('📲 WhatsApp khul raha hai — message bhej do, shop ko turant pata chal jayega', 'success');
+  }
   location.hash = '#/orders';
+}
+
+// the order whose WhatsApp hand-off just happened, so My Orders can
+// highlight the send button
+let lastOrderForWA = null;
+
+// ---- WhatsApp helpers used by the order cards ----
+function waSend(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  if (!window.WA) { toast('WhatsApp module load nahi hua', 'error'); return; }
+  window.WA.sendOrder(o);
+  toast('📲 WhatsApp khul raha hai — Send daba do');
+}
+
+function waShare(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  window.WA.shareOrder(o).then(r => {
+    if (r === 'copied') toast('📋 Order details copy ho gayi — WhatsApp mein paste kar do');
+    else if (r === true) toast('📤 Share ho gaya');
+    else if (r === false) toast('Share nahi ho paya', 'error');
+  });
+}
+
+function waCopy(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  window.WA.copyText(window.WA.buildMessage(o)).then(r => {
+    toast(r ? '📋 Order details copy ho gayi' : 'Copy nahi ho paya', r ? 'success' : 'error');
+  });
+}
+
+// shop -> customer: opens WhatsApp on the customer's number with a
+// confirmation message the owner can review before sending
+function waCustomer(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o || !window.WA) return;
+  const num = String(o.customer.phone || '').replace(/\D/g, '');
+  if (num.length < 10) { toast('Customer ka phone number theek nahi', 'error'); return; }
+  const text = window.WA.customerMessage(o);
+  window.open(window.WA.waLink(text, '91' + num.slice(-10)), '_blank', 'noopener');
+  toast('📲 Customer ko WhatsApp message ready hai — Send daba do');
+}
+
+function saveWaNumber() {
+  const inp = document.getElementById('waNumber');
+  if (!inp || !window.WA) return;
+  if (window.WA.setShopNumber(inp.value)) {
+    inp.value = window.WA.shopNumber();
+    toast('✅ WhatsApp number save ho gaya — ab order message yahan jayega');
+  } else {
+    toast('Number theek nahi — country code ke saath 10-15 digits daalo', 'error');
+  }
 }
 
 function renderOrders(app) {
@@ -1339,6 +1400,14 @@ function renderOrders(app) {
               <span class="order-total">Total: ₹${o.total}</span>
               ${o.singleBuy ? '<span class="single-tag">⚡ Single Item</span>' : ''}
               <span style="color:var(--muted);font-size:0.85rem">${o.customer.name} · ${o.customer.phone}</span>
+            </div>
+            <div class="order-wa">
+              <button class="wa-btn" onclick="waSend('${o.id}')">
+                <span class="wa-ico">📲</span> WhatsApp par bhejo
+              </button>
+              <button class="wa-mini" onclick="waShare('${o.id}')" title="Kisi bhi app se share karo">📤 Share</button>
+              <button class="wa-mini" onclick="waCopy('${o.id}')" title="Order details copy karo">📋 Copy</button>
+              ${o.id === lastOrderForWA ? '<span class="wa-hint">← abhi bheja nahi? Send daba do</span>' : ''}
             </div>
           </div>
         `;
@@ -1403,6 +1472,17 @@ function renderAdmin(app) {
       </div>
 
       <div id="notifBar"></div>
+
+      <div class="wa-setting">
+        <div class="was-ico">📲</div>
+        <div class="was-txt">
+          <b>WhatsApp number — jahan order message jayega</b>
+          <span>Country code ke saath, sirf digits (jaise 919876543210)</span>
+        </div>
+        <input type="tel" id="waNumber" class="was-input"
+               placeholder="919876543210" value="${window.WA ? window.WA.shopNumber() : ''}">
+        <button class="btn btn-sm btn-green" onclick="saveWaNumber()">Save</button>
+      </div>
 
       <div class="adm-toolbar">
         <div class="adm-filters">
@@ -1523,6 +1603,13 @@ function renderAdminGrid() {
 
         <div class="adm-total">
           <span>Total</span><span>₹${o.total}</span>
+        </div>
+
+        <div class="adm-wa">
+          <button class="wa-btn" onclick="waCustomer('${o.id}')" title="Customer ko WhatsApp par order confirm bhejo">
+            <span class="wa-ico">📲</span> Customer ko WhatsApp
+          </button>
+          <button class="wa-mini" onclick="waCopy('${o.id}')" title="Order details copy karo">📋</button>
         </div>
 
         ${o.timeline && o.timeline.length ? `

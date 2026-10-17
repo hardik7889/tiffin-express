@@ -971,6 +971,65 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
   .loc-btn { width:100%; justify-content:center; }
 }
 
+/* ===== WHATSAPP ===== */
+.wa-btn {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  padding:9px 16px; border-radius:10px; cursor:pointer;
+  background:linear-gradient(135deg,#25d366,#128c7e); color:#04231a;
+  border:none; font-family:'Orbitron',sans-serif;
+  font-size:9.5px; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; white-space:nowrap;
+  box-shadow:0 0 16px rgba(37,211,102,.4);
+  transition:transform .2s, box-shadow .2s;
+}
+.wa-btn:hover { transform:translateY(-1px); box-shadow:0 0 26px rgba(37,211,102,.8); }
+.wa-ico { font-size:13px; }
+
+.wa-mini {
+  padding:8px 11px; border-radius:9px; cursor:pointer;
+  background:rgba(37,211,102,.12); border:1px solid rgba(37,211,102,.4);
+  color:#4ade80; font-size:11px; line-height:1;
+  transition:background .2s, box-shadow .2s;
+}
+.wa-mini:hover { background:rgba(37,211,102,.24); box-shadow:0 0 14px rgba(37,211,102,.5); }
+
+.order-wa, .adm-wa {
+  display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;
+  margin-top:1rem; padding-top:0.9rem;
+  border-top:1px dashed rgba(37,211,102,.25);
+}
+.adm-wa { margin-top:0; margin-bottom:0.9rem; border-top:none; padding-top:0; }
+.wa-hint { font-size:.72rem; color:var(--amber); }
+
+/* the shop's WhatsApp number setting in the admin panel */
+.wa-setting {
+  display:flex; align-items:center; gap:0.9rem; flex-wrap:wrap;
+  padding:0.9rem 1.2rem; border-radius:14px; margin-bottom:1.2rem;
+  background:linear-gradient(120deg, rgba(37,211,102,.10), rgba(94,231,255,.06));
+  border:1px solid rgba(37,211,102,.35);
+}
+.wa-setting .was-ico { font-size:1.5rem; line-height:1; }
+.wa-setting .was-txt { flex:1; min-width:180px; display:flex; flex-direction:column; gap:0.1rem; }
+.wa-setting .was-txt b {
+  font-family:'Orbitron',sans-serif; font-size:.76rem; color:#4ade80;
+  letter-spacing:.02em;
+}
+.wa-setting .was-txt span { font-size:.74rem; color:var(--dim); }
+.was-input {
+  width:180px; padding:0.6rem 0.9rem; border-radius:10px;
+  background:rgba(5,6,15,.85); border:1px solid rgba(37,211,102,.35);
+  color:var(--text); font-family:'Rajdhani',sans-serif; font-size:.95rem;
+  letter-spacing:.03em;
+}
+.was-input:focus { outline:none; border-color:#25d366; box-shadow:0 0 0 3px rgba(37,211,102,.18); }
+
+@media (max-width:620px) {
+  .wa-setting { flex-direction:column; align-items:stretch; text-align:center; }
+  .wa-setting .was-ico { align-self:center; }
+  .was-input { width:100%; }
+  .order-wa .wa-btn, .adm-wa .wa-btn { width:100%; justify-content:center; }
+}
+
 /* ---------- 3D extruded eyebrow (per-letter arc) ---------- */
 .eyebrow-3d {
   display:inline-block; white-space:nowrap;
