@@ -875,8 +875,8 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
 
 /* ===== LOCATION PICKER (Uber-style) ===== */
 .loc-head {
-  display:flex; justify-content:space-between; align-items:center;
-  gap:0.8rem; flex-wrap:wrap; margin-bottom:0.6rem;
+  display:flex; flex-direction:column; align-items:center;
+  gap:0.55rem; margin-bottom:0.75rem; text-align:center;
 }
 .loc-head label {
   font-family:'Rajdhani',sans-serif; font-size:.78rem; color:var(--dim);
@@ -967,8 +967,7 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
 
 @media (max-width:620px) {
   .loc-map { height:150px; }
-  .loc-head { flex-direction:column; align-items:stretch; }
-  .loc-btn { justify-content:center; }
+  .loc-btn { width:100%; justify-content:center; }
 }
 
 /* ---------- 3D extruded eyebrow (per-letter arc) ---------- */
