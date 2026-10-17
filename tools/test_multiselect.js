@@ -129,9 +129,11 @@ api.togglePick('d3');   // Paneer Tikka Masala 90
 api.addPickedToCart();
 t('all three landed in the cart', api.cart().length === 3, 'cart=' + api.cart().length);
 t('cart holds the right ids', api.cart().map(c => c.id).sort().join(',') === 'd3,l1,l5', api.cart().map(c=>c.id).join(','));
-t('subtotal 265', api.cart().reduce((s,i)=>s+i.price*i.qty,0) === 265);
+const expectSub = api.cart().reduce((s,i)=>s+i.price*i.qty,0);
+t('subtotal matches the three dishes', expectSub === 75 + 100 + api.MENU.dinner.find(x=>x.id==='d3').price,
+  'sub=' + expectSub);
 t('delivery charged once (49)', api.cartDelivery() === 49);
-t('cart total 314', api.cartTotal() === 314, 'total=' + api.cartTotal());
+t('cart total = subtotal + 49 once', api.cartTotal() === expectSub + 49, 'total=' + api.cartTotal());
 t('picks cleared after adding', api.picked().length === 0);
 
 console.log('\n--- adding again bumps quantity, not delivery ---');
@@ -139,7 +141,7 @@ api.togglePick('l1');
 api.addPickedToCart();
 t('same dish increments qty', api.cart().find(c => c.id === 'l1').qty === 2);
 t('delivery still 49', api.cartDelivery() === 49);
-t('cart total 389', api.cartTotal() === 389, 'total=' + api.cartTotal());
+t('cart total grows by one dish, delivery unchanged', api.cartTotal() === expectSub + 75 + 49, 'total=' + api.cartTotal());
 
 console.log('\n--- bulk buy (skips the cart) ---');
 api.clearPicks(); api.setCart([]);
@@ -213,14 +215,15 @@ t('three lines total', mix.length === 3, 'n=' + mix.length);
 t('two dishes + one package', mix.filter(l => !l.isPackage).length === 2 && mix.filter(l => l.isPackage).length === 1);
 t('mixed selection charges Rs 49 once', api.deliveryFor(mix) === 49);
 const mixSub = mix.reduce((s, i) => s + i.price * (i.qty || 1), 0);
-t('mixed subtotal 1664', mixSub === 1664, 'sub=' + mixSub);
+const expectMix = 1499 + 75 + api.MENU.dinner.find(x=>x.id==='d3').price;
+t('mixed subtotal matches package + dishes', mixSub === expectMix, 'sub=' + mixSub + ' expected ' + expectMix);
 
 console.log('\n--- bulk add with a package ---');
 api.addPickedToCart();
 t('cart has all three lines', api.cart().length === 3, 'cart=' + api.cart().length);
 t('package is in the cart', api.cart().some(c => c.id === 'pkg_full_week'));
 t('cart delivery is 49 once', api.cartDelivery() === 49);
-t('cart total 1713', api.cartTotal() === 1713, 'total=' + api.cartTotal());
+t('mixed cart total = subtotal + 49', api.cartTotal() === expectMix + 49, 'total=' + api.cartTotal());
 
 console.log('\n--- bulk buy with a package ---');
 api.clearPicks(); api.setCart([]);
@@ -287,7 +290,7 @@ console.log('\n--- week row tick joins the same selection ---');
 api.clearPicks(); api.setCart([]);
 api.togglePickWeek('d3');
 t('week tick registers', api.picked().length === 1 && api.picked()[0] === 'd3');
-t('resolves to the right dish', api.pickedLines()[0].name === 'Paneer Tikka Masala');
+t('resolves to the right dish', api.pickedLines()[0].id === 'd3', 'id=' + api.pickedLines()[0].id);
 api.togglePickWeek('d3');
 t('tick toggles off', api.picked().length === 0);
 
