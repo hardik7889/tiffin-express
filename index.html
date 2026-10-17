@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
 :root {
   --bg: #0a0a0f;
@@ -257,10 +259,13 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 <div id="app"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="food-art.js"></script>
 <script src="dish-photos.js"></script>
 <script src="holo.js"></script>
 <script src="notify.js"></script>
+<script src="location.js"></script>
 <script>
 // ===== MEAL CARD RENDERER (3D food photo) =====
 function artFor(id) {
@@ -1218,7 +1223,7 @@ function showCheckout(items, opts) {
       </div>
       <div class="form-group"><label>Naam *</label><input type="text" id="chkName" placeholder="Apna naam"></div>
       <div class="form-group"><label>Phone *</label><input type="tel" id="chkPhone" placeholder="10 digit phone number"></div>
-      <div class="form-group"><label>Address *</label><textarea id="chkAddress" rows="3" placeholder="Delivery address (area, landmark)"></textarea></div>
+      <div class="form-group" id="locField"></div>
       <div class="form-group"><label>Payment</label><select id="chkPayment"><option value="cod">Cash on Delivery</option><option value="upi">UPI</option><option value="card">Card</option></select></div>
       <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem">
         <button class="btn btn-secondary btn-sm" onclick="closeCheckout()">Cancel</button>
@@ -1228,6 +1233,7 @@ function showCheckout(items, opts) {
   `;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  if (window.Loc) window.Loc.mount();
   document.getElementById('placeBtn').onclick = () => placeOrder(list, o);
 }
 
@@ -1261,9 +1267,16 @@ function placeOrder(items, opts) {
   const sub = list.reduce((s, i) => s + i.price * i.qty, 0);
   const delivery = deliveryFor(list);
   const total = sub + delivery;
+  // the location picker may have captured a GPS fix alongside the address
+  const lat = (document.getElementById('chkLat') || {}).value || '';
+  const lon = (document.getElementById('chkLon') || {}).value || '';
   const order = {
     id: genOrderId(),
-    customer: { name, phone, address, payment },
+    customer: {
+      name, phone, address, payment,
+      lat: lat ? Number(lat) : null,
+      lon: lon ? Number(lon) : null,
+    },
     items: list.map(i => ({ ...i })),
     subtotal: sub,
     delivery: delivery,
@@ -1487,7 +1500,13 @@ function renderAdminGrid() {
         <div class="customer">
           <div class="name">${o.customer.name}${o.singleBuy ? ' <span class="single-tag">⚡ Single</span>' : ''}</div>
           <div class="detail">📞 <a href="tel:${o.customer.phone}" style="color:var(--cyan)">${o.customer.phone}</a></div>
-          <div class="detail">📍 ${o.customer.address}</div>
+          <div class="detail">📍 ${o.customer.address}${
+            (o.customer.lat && o.customer.lon)
+              ? ` <a href="https://www.google.com/maps?q=${o.customer.lat},${o.customer.lon}"
+                     target="_blank" rel="noopener"
+                     style="color:var(--mint);white-space:nowrap">🗺️ Map kholo</a>`
+              : ''
+          }</div>
           <div class="detail">${pay}</div>
         </div>
 
