@@ -249,7 +249,7 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
     <a href="#/menu" data-route="menu">Menu</a>
     <a href="#/cart" data-route="cart">Cart</a>
     <a href="#/orders" data-route="orders">My Orders</a>
-    <a href="#/admin" data-route="admin" style="display:none" id="adminNav">Admin</a>
+    <a href="#/admin" data-route="admin" id="adminNav">🔐 Admin</a>
     <button class="cart-btn" onclick="goCart()">🛒 <span class="badge" id="cartBadge">0</span></button>
   </div>
 </nav>
@@ -1017,56 +1017,81 @@ function getStatusLabel(s) {
   return m[s] || s;
 }
 
+// short label without the emoji, for tabs and chips
+function getStatusShort(s) {
+  return getStatusLabel(s).replace(/^\S+\s/, '');
+}
+
 // ===== ADMIN =====
 let isAdmin = sessionStorage.getItem('tiffin_admin') === '1';
+
+const STATUS_FLOW = ['pending', 'accepted', 'delivering', 'delivered'];
 
 function renderAdmin(app) {
   if (!isAdmin) {
     app.innerHTML = `
-      <div class="page">
+      <div class="page" style="max-width:440px">
         <h2>🔐 Admin Login</h2>
-        <p style="color:var(--muted);margin-bottom:1.5rem">Admin panel access karne ke liye password daalo</p>
-        <div class="form-group" style="max-width:400px"><label>Password</label><input type="password" id="adminPass" placeholder="Admin password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
-        <button class="btn btn-primary" onclick="doAdminLogin()">Login</button>
-        <button class="btn btn-secondary" style="margin-left:0.5rem" onclick="location.hash='#/'">Home</button>
+        <p style="color:var(--muted);margin-bottom:1.5rem">Order manage karne ke liye password daalo</p>
+        <div class="form-group"><label>Password</label><input type="password" id="adminPass" placeholder="Admin password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doAdminLogin()">Login</button>
+        <p style="color:var(--muted);font-size:0.8rem;margin-top:1rem;text-align:center">Default password: <b style="color:var(--cyan)">admin123</b></p>
       </div>
     `;
     return;
   }
 
-  document.getElementById('adminNav').style.display = '';
-
-  const pending = orders.filter(o => o.status === 'pending');
-  const accepted = orders.filter(o => o.status === 'accepted');
-  const delivering = orders.filter(o => o.status === 'delivering');
-  const delivered = orders.filter(o => o.status === 'delivered');
-  const cancelled = orders.filter(o => o.status === 'cancelled');
+  const c = statusCounts();
+  const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total || 0), 0);
+  const today = new Date().toDateString();
+  const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
 
   app.innerHTML = `
-    <div class="page" style="max-width:1200px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
-        <h2>🔐 Admin Dashboard</h2>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-          <span class="status status-pending">${pending.length} Pending</span>
-          <span class="status status-accepted">${accepted.length} Accepted</span>
-          <span class="status status-delivering">${delivering.length} Delivering</span>
-          <span class="status status-delivered">${delivered.length} Delivered</span>
-          <span class="status status-cancelled">${cancelled.length} Cancelled</span>
+    <div class="page" style="max-width:1280px">
+      <div class="admin-head">
+        <div>
+          <h2>🔐 Admin Dashboard</h2>
+          <p style="color:var(--muted);font-size:0.88rem">Saare orders yahan — accept, cancel, deliver sab kar sakte ho</p>
         </div>
-      </div>
-      <div class="cta-row" style="margin-bottom:2rem">
-        <button class="btn btn-sm btn-primary" onclick="filterAdmin('all')">All</button>
-        <button class="btn btn-sm btn-secondary" onclick="filterAdmin('pending')">Pending</button>
-        <button class="btn btn-sm btn-secondary" onclick="filterAdmin('accepted')">Accepted</button>
-        <button class="btn btn-sm btn-secondary" onclick="filterAdmin('delivering')">Delivering</button>
-        <button class="btn btn-sm btn-secondary" onclick="filterAdmin('delivered')">Delivered</button>
         <button class="btn btn-sm btn-red" onclick="logoutAdmin()">Logout</button>
       </div>
+
+      <div class="adm-stats">
+        <div class="adm-stat"><div class="n">${orders.length}</div><div class="l">Total Orders</div></div>
+        <div class="adm-stat"><div class="n">${todayOrders.length}</div><div class="l">Aaj ke</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--amber)">${c.pending}</div><div class="l">Pending</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--cyan)">${c.accepted}</div><div class="l">Accepted</div></div>
+        <div class="adm-stat"><div class="n" style="color:#b07cff">${c.delivering}</div><div class="l">Delivering</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--green)">${c.delivered}</div><div class="l">Delivered</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--red)">${c.cancelled}</div><div class="l">Cancelled</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--mint)">₹${revenue.toLocaleString('en-IN')}</div><div class="l">Revenue</div></div>
+      </div>
+
+      <div class="adm-toolbar">
+        <div class="adm-filters">
+          ${['all','pending','accepted','delivering','delivered','cancelled'].map(s => `
+            <button class="adm-tab ${s === 'all' ? 'active' : ''}" data-filter="${s}"
+                    onclick="filterAdmin('${s}')">
+              ${s === 'all' ? 'Saare' : getStatusShort(s)}
+              <span class="adm-tab-n">${s === 'all' ? orders.length : c[s]}</span>
+            </button>
+          `).join('')}
+        </div>
+        <input type="search" id="admSearch" class="adm-search" placeholder="🔍 Naam, phone ya Order ID se dhundo..."
+               oninput="renderAdminGrid()">
+      </div>
+
       <div class="admin-grid" id="adminGrid"></div>
     </div>
   `;
   window._adminFilter = 'all';
   renderAdminGrid();
+}
+
+function statusCounts() {
+  const c = { pending: 0, accepted: 0, delivering: 0, delivered: 0, cancelled: 0 };
+  orders.forEach(o => { if (o.status in c) c[o.status]++; });
+  return c;
 }
 
 function doAdminLogin() {
@@ -1084,66 +1109,98 @@ function doAdminLogin() {
 function logoutAdmin() {
   isAdmin = false;
   sessionStorage.removeItem('tiffin_admin');
-  document.getElementById('adminNav').style.display = 'none';
   toast('Admin logout ho gaya');
   location.hash = '#/';
 }
 
 function filterAdmin(status) {
   window._adminFilter = status;
+  document.querySelectorAll('.adm-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.filter === status));
   renderAdminGrid();
+}
+
+function adminVisible() {
+  const f = window._adminFilter || 'all';
+  const q = (document.getElementById('admSearch')?.value || '').trim().toLowerCase();
+  return orders.filter(o => {
+    if (f !== 'all' && o.status !== f) return false;
+    if (!q) return true;
+    return o.id.toLowerCase().includes(q)
+        || (o.customer.name || '').toLowerCase().includes(q)
+        || (o.customer.phone || '').includes(q)
+        || (o.customer.address || '').toLowerCase().includes(q);
+  });
 }
 
 function renderAdminGrid() {
   const grid = document.getElementById('adminGrid');
   if (!grid) return;
-  let filtered = orders;
-  if (window._adminFilter && window._adminFilter !== 'all') {
-    filtered = orders.filter(o => o.status === window._adminFilter);
-  }
-  if (filtered.length === 0) {
-    grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:2rem">Koi order nahi mila</p>';
+  const list = adminVisible();
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="adm-empty"><div style="font-size:2.4rem">📭</div>
+      <b>${orders.length ? 'Is filter mein koi order nahi' : 'Abhi koi order nahi aaya'}</b>
+      <span>${orders.length ? 'Doosra filter try karo' : 'Customer order karega to yahan dikhega'}</span></div>`;
     return;
   }
-  grid.innerHTML = filtered.map(o => {
+
+  grid.innerHTML = list.map(o => {
     const d = new Date(o.date);
-    const dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    const dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
+                  + ' · ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    const pay = o.customer.payment === 'cod' ? '💵 Cash on Delivery'
+              : o.customer.payment === 'upi' ? '📱 UPI' : '💳 Card';
     return `
-      <div class="admin-card">
+      <div class="admin-card st-${o.status}">
         <div class="order-header">
           <span class="order-id">${o.id}</span>
           <span class="status status-${o.status}">${getStatusLabel(o.status)}</span>
         </div>
-        <div style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">${dateStr}</div>
+        <div class="adm-when">🕒 ${dateStr}</div>
+
         <div class="customer">
-          <div class="name">${o.customer.name}</div>
-          <div class="detail">📞 ${o.customer.phone}</div>
+          <div class="name">${o.customer.name}${o.singleBuy ? ' <span class="single-tag">⚡ Single</span>' : ''}</div>
+          <div class="detail">📞 <a href="tel:${o.customer.phone}" style="color:var(--cyan)">${o.customer.phone}</a></div>
           <div class="detail">📍 ${o.customer.address}</div>
-          <div class="detail">💳 ${o.customer.payment === 'cod' ? 'Cash on Delivery' : o.customer.payment === 'upi' ? 'UPI' : 'Card'}</div>
+          <div class="detail">${pay}</div>
         </div>
-        <div style="margin-bottom:1rem">
-          ${o.items.map(i => `<div style="color:var(--muted);font-size:0.85rem;padding:0.2rem 0">${i.name} ×${i.qty} — ₹${i.price * i.qty}</div>`).join('')}
-          ${o.delivery ? `<div style="color:var(--amber);font-size:0.85rem;padding:0.2rem 0">🚚 Delivery charge — ₹${o.delivery}</div>` : `<div style="color:var(--green);font-size:0.85rem;padding:0.2rem 0">🚚 Delivery — FREE</div>`}
+
+        <div class="adm-items">
+          ${o.items.map(i => `
+            <div class="adm-item">
+              <span>${i.name}${i.qty > 1 ? ' ×' + i.qty : ''}</span>
+              <span>₹${i.price * i.qty}</span>
+            </div>`).join('')}
+          <div class="adm-item" style="color:${o.delivery ? 'var(--amber)' : 'var(--green)'}">
+            <span>🚚 Delivery</span><span>${o.delivery ? '₹' + o.delivery : 'FREE'}</span>
+          </div>
         </div>
-        <div style="font-weight:700;color:var(--accent2);margin-bottom:1rem">
-          Total: ₹${o.total}
-          ${o.singleBuy ? '<span class="single-tag">⚡ Single Item</span>' : ''}
+
+        <div class="adm-total">
+          <span>Total</span><span>₹${o.total}</span>
         </div>
+
+        ${o.timeline && o.timeline.length ? `
+          <div class="adm-timeline">
+            ${o.timeline.map(t => `<span class="adm-step st-${t.status}">${getStatusLabel(t.status)}</span>`).join('')}
+          </div>` : ''}
+
         <div class="actions">
           ${o.status === 'pending' ? `
-            <button class="btn btn-sm btn-blue" onclick="updateOrderStatus('${o.id}', 'accepted')">✅ Accept</button>
-            <button class="btn btn-sm btn-red" onclick="updateOrderStatus('${o.id}', 'cancelled')">❌ Cancel</button>
-          ` : ''}
+            <button class="btn btn-sm btn-blue" onclick="updateOrderStatus('${o.id}','accepted')">✅ Accept</button>
+            <button class="btn btn-sm btn-red" onclick="updateOrderStatus('${o.id}','cancelled')">❌ Cancel</button>` : ''}
           ${o.status === 'accepted' ? `
-            <button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}', 'delivering')">🚚 Start Delivery</button>
-            <button class="btn btn-sm btn-red" onclick="updateOrderStatus('${o.id}', 'cancelled')">❌ Cancel</button>
-          ` : ''}
+            <button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${o.id}','delivering')">🚚 Deliver karne bhejo</button>
+            <button class="btn btn-sm btn-red" onclick="updateOrderStatus('${o.id}','cancelled')">❌ Cancel</button>` : ''}
           ${o.status === 'delivering' ? `
-            <button class="btn btn-sm btn-green" onclick="updateOrderStatus('${o.id}', 'delivered')">📦 Mark Delivered</button>
-          ` : ''}
-          ${(o.status === 'delivered' || o.status === 'cancelled') ? `
-            <button class="btn btn-sm btn-secondary" onclick="deleteOrder('${o.id}')">🗑️ Delete</button>
-          ` : ''}
+            <button class="btn btn-sm btn-green" onclick="updateOrderStatus('${o.id}','delivered')">📦 Delivered</button>
+            <button class="btn btn-sm btn-red" onclick="updateOrderStatus('${o.id}','cancelled')">❌ Cancel</button>` : ''}
+          ${o.status === 'delivered' ? `
+            <button class="btn btn-sm btn-secondary" onclick="updateOrderStatus('${o.id}','delivering')">↩︎ Wapas Delivering</button>` : ''}
+          ${o.status === 'cancelled' ? `
+            <button class="btn btn-sm btn-secondary" onclick="updateOrderStatus('${o.id}','pending')">↩︎ Restore</button>` : ''}
+          <button class="btn btn-sm btn-red" onclick="deleteOrder('${o.id}')" title="Order hataao">🗑️</button>
         </div>
       </div>
     `;
@@ -1154,17 +1211,19 @@ function updateOrderStatus(id, status) {
   const order = orders.find(o => o.id === id);
   if (!order) return;
   order.status = status;
+  order.timeline = order.timeline || [];
   order.timeline.push({ status, time: new Date().toISOString() });
   saveOrders();
-  renderAdminGrid();
+  // keep the header counters honest after a status change
+  renderAdmin(document.getElementById('app'));
   toast(`Order ${id}: ${getStatusLabel(status)}`);
 }
 
 function deleteOrder(id) {
-  if (!confirm(`Order ${id} delete karna hai?`)) return;
+  if (!confirm(`Order ${id} delete karna hai? Yeh wapas nahi aayega.`)) return;
   orders = orders.filter(o => o.id !== id);
   saveOrders();
-  renderAdminGrid();
+  renderAdmin(document.getElementById('app'));
   toast('Order delete ho gaya');
 }
 
