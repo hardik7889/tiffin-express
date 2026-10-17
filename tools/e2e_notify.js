@@ -143,21 +143,17 @@ const t = (n, c, x) => { if (c) { pass++; console.log('  PASS  ' + n); } else { 
   await wsA.evaluate(`
     window.__alerts = { tones: 0, notifs: [], titles: [] };
     (function(){
-      // spy on the Web Audio calls themselves — patching OrderNotify.play
-      // does not work because alertOrder closes over the inner playTone
-      var RealAC = window.AudioContext || window.webkitAudioContext;
-      window.AudioContext = function(){
-        var c = new RealAC();
-        var realOsc = c.createOscillator.bind(c);
-        c.createOscillator = function(){
-          var o = realOsc();
-          var realStart = o.start.bind(o);
-          o.start = function(t){ window.__alerts.tones++; return realStart(t); };
-          return o;
-        };
-        return c;
+      // Spy on the prototype: the module already built its AudioContext at
+      // mount, and every instance shares the prototype, so patching the
+      // constructor would miss it.
+      var AC = window.AudioContext || window.webkitAudioContext;
+      var realOsc = AC.prototype.createOscillator;
+      AC.prototype.createOscillator = function(){
+        var o = realOsc.call(this);
+        var realStart = o.start.bind(o);
+        o.start = function(t){ window.__alerts.tones++; return realStart(t); };
+        return o;
       };
-      window.AudioContext.prototype = RealAC.prototype;
       var RealNotif = window.Notification;
       window.Notification = function(title, opts){
         window.__alerts.notifs.push({ title: title, body: (opts||{}).body || '' });
@@ -173,6 +169,16 @@ const t = (n, c, x) => { if (c) { pass++; console.log('  PASS  ' + n); } else { 
     })()`);
   // re-mount so the bar reflects the forced pref
   await wsA.evaluate(`OrderNotify.renderBar(); 'ok'`);
+
+  // A real trusted click is what unlocks Web Audio. Headless has no human,
+  // so dispatch one through the input domain — this is the automatic path
+  // being proven: one ordinary click, then orders ring on their own.
+  await wsA.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 400, y: 300, button: 'left', clickCount: 1 });
+  await wsA.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 400, y: 300, button: 'left', clickCount: 1 });
+  await wsA.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 401, y: 301 });
+  await sleep(1200);
+  const armed = await wsA.evaluate(`JSON.stringify(window.__alerts)`);
+  t('a single click arms the ring (no enable button pressed)', /"tones":0/.test(armed), armed);
 
   const before = await wsA.evaluate(`JSON.stringify(window.__alerts)`);
   t('no alert yet before the order', /"tones":0/.test(before), before);
@@ -208,7 +214,7 @@ const t = (n, c, x) => { if (c) { pass++; console.log('  PASS  ' + n); } else { 
 
   const after = await wsA.evaluate(`JSON.stringify(window.__alerts)`);
   const parsed = JSON.parse(after || '{}');
-  t('admin tab played the tone', parsed.tones > 0, 'tones=' + parsed.tones);
+  t('admin tab rang automatically after the click', parsed.tones > 0, 'tones=' + parsed.tones);
   t('admin tab showed a desktop popup', (parsed.notifs || []).length > 0, 'n=' + (parsed.notifs||[]).length);
   t('popup names the customer', (parsed.notifs||[]).some(n => /E2E Customer/.test(n.body)), after);
   t('popup carries the total', (parsed.notifs||[]).some(n => /124/.test(n.body)), after);

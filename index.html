@@ -447,6 +447,8 @@ function route() {
   else renderHome(app);
   // stop the order watcher as soon as the admin panel leaves the screen
   if (r !== 'admin' && window.OrderNotify) window.OrderNotify.unmount();
+  // arriving at the admin panel arms the ring straight away, no button press
+  if (r === 'admin' && window.OrderNotify) window.OrderNotify.mount();
   if (typeof window.holoBoot === 'function') window.holoBoot();
   window.scrollTo(0,0);
 }

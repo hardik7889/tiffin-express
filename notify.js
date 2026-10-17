@@ -30,7 +30,8 @@
   var audioCtx = null;
   var pollTimer = null;
   var titleTimer = null;
-  var autoUnlockArmed = false;
+  var unlockBound = false;
+  var pendingTone = 0;          // orders that arrived while audio was blocked
   var lastAlertIds = [];
 
   /* ---------- storage helpers ---------- */
@@ -52,6 +53,10 @@
 
   /* ---------- audio ---------- */
 
+  // resume() is asynchronous in real browsers: the state stays 'suspended'
+  // until the promise settles, so a tone fired in the same tick would be
+  // dropped. Remember the pending resume and flush any queued ring when it
+  // resolves.
   function unlockAudio() {
     try {
       if (!audioCtx) {
@@ -59,14 +64,28 @@
         if (!AC) return false;
         audioCtx = new AC();
       }
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      return audioCtx.state !== 'closed';
+      if (audioCtx.state === 'suspended') {
+        var p = audioCtx.resume();
+        if (p && p.then) {
+          p.then(function () {
+            // Play the queued ring directly — calling unlockAudio again here
+            // would re-enter this branch and loop forever.
+            if (isOn() && pendingTone > 0 && audioReady()) {
+              var n = pendingTone;
+              if (rawTone(n)) pendingTone = 0;
+            }
+            renderBar();
+          }).catch(function () {});
+        }
+      }
+      return true;
     } catch (e) { return false; }
   }
 
-  // Bright two-note chime (A5 -> D6) played twice, ~0.9s apart.
-  function playTone(times) {
-    if (!unlockAudio()) return false;
+  // Plays the chime on an already-running context. No unlocking here, so
+  // callers that are themselves inside the unlock path cannot recurse.
+  function rawTone(times) {
+    if (!audioReady()) return false;
     var reps = times || 1;
     var t0 = audioCtx.currentTime;
     var notes = [[880.00, 0], [1174.66, 0.17], [880.00, 0.40], [1174.66, 0.57]];
@@ -78,26 +97,65 @@
         var gain = audioCtx.createGain();
         osc.type = 'sine';
         osc.frequency.value = f;
+        // a touch of triangle on top gives the chime a bright, bell-like edge
+        var osc2 = audioCtx.createOscillator();
+        var gain2 = audioCtx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.value = f * 2;
+        gain2.gain.setValueAtTime(0.0001, at);
+        gain2.gain.exponentialRampToValueAtTime(0.07, at + 0.015);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, at + 0.30);
         gain.gain.setValueAtTime(0.0001, at);
-        gain.gain.exponentialRampToValueAtTime(0.28, at + 0.015);
-        gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.40);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(at);
-        osc.stop(at + 0.45);
+        gain.gain.exponentialRampToValueAtTime(0.62, at + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.45);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc2.connect(gain2); gain2.connect(audioCtx.destination);
+        osc.start(at);  osc.stop(at + 0.50);
+        osc2.start(at); osc2.stop(at + 0.35);
       }
     }
     return true;
   }
 
-  // Re-arm audio on the first gesture after a reload, since the browser
-  // suspends the context again and the enable button's gesture is gone.
-  function armAutoUnlock() {
-    if (autoUnlockArmed) return;
-    autoUnlockArmed = true;
-    var h = function () { if (isOn()) unlockAudio(); };
-    document.addEventListener('pointerdown', h, { once: true, passive: true });
-    document.addEventListener('keydown', h, { once: true });
+  // Public entry point: make sure the context is awake, then ring.
+  function playTone(times) {
+    if (!unlockAudio()) return false;
+    return rawTone(times);
+  }
+
+  // Browsers only allow audio after a real user gesture, and the context is
+  // suspended again on every reload. So instead of asking the admin to press
+  // a button, keep listening for ANY interaction until the context is truly
+  // running — they have to click something to use the page anyway.
+  function audioReady() {
+    return !!(audioCtx && audioCtx.state === 'running');
+  }
+
+  function bindAutoUnlock() {
+    if (unlockBound) return;
+    unlockBound = true;
+
+    var tryUnlock = function () {
+      if (!isOn()) return;
+      unlockAudio();
+      if (audioReady()) {
+        document.removeEventListener('pointerdown', tryUnlock);
+        document.removeEventListener('keydown', tryUnlock);
+        document.removeEventListener('touchstart', tryUnlock);
+        document.removeEventListener('mousemove', tryUnlock);
+        // an order came in while we were muted — ring it now, without
+        // re-entering the unlock path
+        if (pendingTone > 0) {
+          var n = pendingTone;
+          if (rawTone(n)) pendingTone = 0;
+        }
+      }
+    };
+
+    document.addEventListener('pointerdown', tryUnlock, { passive: true });
+    document.addEventListener('keydown', tryUnlock);
+    document.addEventListener('touchstart', tryUnlock, { passive: true });
+    document.addEventListener('mousemove', tryUnlock, { passive: true });
   }
 
   /* ---------- notifications ---------- */
@@ -109,7 +167,18 @@
   function askPermission() {
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'default') return;
-    try { Notification.requestPermission(); } catch (e) {}
+    try { Notification.requestPermission().then(renderBar); } catch (e) {}
+  }
+
+  // Ask on load AND on the first gesture — some browsers only honour the
+  // prompt when it comes from a user action.
+  var permBound = false;
+  function bindAutoPermission() {
+    if (permBound) return;
+    permBound = true;
+    var h = function () { if (isOn()) askPermission(); };
+    document.addEventListener('pointerdown', h, { passive: true });
+    document.addEventListener('keydown', h);
   }
 
   function showDesktop(o) {
@@ -164,7 +233,7 @@
 
   function alertOrder(o) {
     if (!isOn()) return;          // master switch: off means fully silent
-    playTone(2);
+    if (!playTone(2)) pendingTone = 2;   // muted by the browser — ring on next click
     showDesktop(o);
     flashTitle();
     if (typeof toast === 'function') {
@@ -229,11 +298,13 @@
       + '<div class="notif-bar ' + (on ? 'on' : 'off') + '">'
       +   '<div class="notif-ico">' + (on ? '🔔' : '🔕') + '</div>'
       +   '<div class="notif-txt">'
-      +     '<b>Order Notification ' + (on ? 'ON' : 'OFF') + '</b>'
+      +     '<b>Order Notification ' + (on ? 'ON — Automatic' : 'OFF') + '</b>'
       +     '<span>' + (on
-              ? 'Naya order aate hi tone bajega aur popup aayega'
-              : 'Tone aur popup band hai — order ka pata nahi chalega') + '</span>'
-      +     '<span class="notif-perm">' + permTxt + '</span>'
+              ? 'Order aate hi ring khud bajegi — kuch dabane ki zarurat nahi'
+              : 'Ring aur popup band hai — order ka pata nahi chalega') + '</span>'
+      +     '<span class="notif-perm">' + permTxt
+      +       (on && !audioReady() ? ' · pehla click par ring arm ho jayegi' : '')
+      +     '</span>'
       +   '</div>'
       +   '<div class="notif-actions">'
       +     '<button class="btn btn-sm ' + (on ? 'btn-secondary' : 'btn-green') + '"'
@@ -251,19 +322,24 @@
     syncSeen(seenIds() === null);
     renderBar();
     startWatch();
-    armAutoUnlock();
-    if (isOn()) askPermission();
+    bindAutoUnlock();
+    bindAutoPermission();
+    if (isOn()) {
+      askPermission();
+      unlockAudio();   // works if the page already had a gesture this session
+    }
   }
 
   function enable() {
     writeJSON(PREF_KEY, 'on');
-    var audioOk = unlockAudio();
+    unlockAudio();
     askPermission();
-    playTone(1);
+    var ok = playTone(1);
     renderBar();
     if (typeof toast === 'function') {
-      toast(audioOk ? '🔔 Notification ON — tone ready' : '🔔 Notification ON (browser ne audio block kiya)',
-            audioOk ? 'success' : 'error');
+      toast(ok ? '🔔 Notification ON — tone ready'
+               : '🔔 Notification ON — tone pehle click par bajega',
+            ok ? 'success' : 'error');
     }
   }
 
@@ -284,7 +360,8 @@
     flashTitle();
     setTimeout(stopTitleFlash, 2600);
     if (typeof toast === 'function') {
-      toast(ok ? '🔊 Test tone baja — aisa hi order par bajega' : 'Audio block hai — ek baar page par click karo',
+      toast(ok ? '🔊 Test ring baj gayi — order par bhi aise hi bajegi'
+               : 'Pehle page par ek baar click karo, phir Test dabao',
             ok ? 'success' : 'error');
     }
     return ok;
