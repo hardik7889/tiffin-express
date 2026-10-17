@@ -322,17 +322,18 @@ function togglePick(id) {
 function isPicked(id) { return picked.indexOf(id) !== -1; }
 
 function syncPickUI() {
-  picked.forEach(id => {
-    const card = document.getElementById('card-' + id);
-    const btn = document.getElementById('pick-' + id);
+  // dishes use card-<id> / pick-<id>; packages use card-pkg-<id> / pick-pkg_<id>_<period>
+  picked.forEach(key => {
+    const card = document.getElementById('card-' + key);
+    const btn = document.getElementById('pick-' + key);
     if (card) card.classList.add('picked');
     if (btn) { btn.classList.add('on'); btn.setAttribute('aria-pressed', 'true'); }
   });
-  document.querySelectorAll('.meal-card.picked').forEach(c => {
-    const id = c.id.replace('card-', '');
-    if (!isPicked(id)) {
+  document.querySelectorAll('.meal-card.picked, .pkg-card.picked').forEach(c => {
+    const key = c.id.replace(/^card-/, '');
+    if (!isPicked(key)) {
       c.classList.remove('picked');
-      const b = document.getElementById('pick-' + id);
+      const b = document.getElementById('pick-' + key);
       if (b) { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); }
     }
   });
@@ -341,7 +342,7 @@ function syncPickUI() {
 
 function clearPicks() {
   picked = [];
-  document.querySelectorAll('.meal-card.picked').forEach(c => c.classList.remove('picked'));
+  document.querySelectorAll('.meal-card.picked, .pkg-card.picked').forEach(c => c.classList.remove('picked'));
   document.querySelectorAll('.pick.on').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); });
   renderPickBar();
 }
@@ -368,15 +369,22 @@ function renderPickBar() {
     bar.innerHTML = '';
     return;
   }
-  const items = pickedItems();
-  const sub = items.reduce((s, i) => s + i.price, 0);
-  const delivery = deliveryFor(items);
+  // dishes and packages can be mixed in one selection
+  const lines = pickedLines();
+  const sub = lines.reduce((s, i) => s + i.price * (i.qty || 1), 0);
+  const delivery = deliveryFor(lines);
   const total = sub + delivery;
+  const pkgCount = lines.filter(isPackageLine).length;
+  const dishCount = lines.length - pkgCount;
+
+  const what = [];
+  if (dishCount) what.push(`${dishCount} dish${dishCount > 1 ? 'es' : ''}`);
+  if (pkgCount) what.push(`${pkgCount} package${pkgCount > 1 ? 's' : ''}`);
 
   bar.className = 'pick-bar show';
   bar.innerHTML = `
     <div class="pb-count">
-      <b>${n}</b> item${n > 1 ? 's' : ''} selected
+      <b>${n}</b> selected${what.length ? ' · ' + what.join(' + ') : ''}
     </div>
     <div class="pb-money">
       <span>Subtotal ₹${sub}</span>
@@ -391,28 +399,30 @@ function renderPickBar() {
   `;
 }
 
-// Add every ticked dish to the cart in one go.
+// Add every ticked item — dishes and packages — to the cart in one go.
 function addPickedToCart() {
-  const items = pickedItems();
-  if (!items.length) { toast('Pehle kuch items select karo', 'error'); return; }
+  const lines = pickedLines();
+  if (!lines.length) { toast('Pehle kuch items select karo', 'error'); return; }
   let added = 0;
-  items.forEach(it => {
+  lines.forEach(it => {
     const existing = cart.find(c => c.id === it.id);
     if (existing) existing.qty++;
-    else cart.push({ ...it, qty: 1 });
+    else cart.push({ ...it, qty: it.qty || 1 });
     added++;
   });
   saveCart();
   clearPicks();
-  toast(`🛒 ${added} item${added > 1 ? 's' : ''} cart mein add ho gaye — delivery sirf ek baar ₹${SINGLE_DELIVERY}`);
+  pulseCartBadge();
+  const delivery = cartDelivery();
+  toast(`🛒 ${added} item${added > 1 ? 's' : ''} cart mein add ho gaye — delivery ${delivery ? 'sirf ek baar ₹' + delivery : 'FREE'}`,
+        'success', 'cart');
 }
 
-// Buy every ticked dish immediately, bypassing the cart.
+// Buy every ticked item immediately, bypassing the cart.
 function buyPicked() {
-  const items = pickedItems().map(i => ({ ...i, qty: 1 }));
-  if (!items.length) { toast('Pehle kuch items select karo', 'error'); return; }
-  const snapshot = items;
-  showCheckout(snapshot, { fromSelection: true });
+  const lines = pickedLines().map(i => ({ ...i, qty: i.qty || 1 }));
+  if (!lines.length) { toast('Pehle kuch items select karo', 'error'); return; }
+  showCheckout(lines, { fromSelection: true });
   // clear the ticks once the order is actually placed
   const btn = document.getElementById('placeBtn');
   if (btn) {
@@ -428,6 +438,13 @@ function selectAllVisible() {
   picked = ids;
   syncPickUI();
   toast(`${ids.length} items select ho gaye`);
+}
+
+// select-all on the packages page
+function selectAllPackages() {
+  picked = PACKAGES.map(p => 'pkg_' + p.id + '_week');
+  syncPickUI();
+  toast(`${picked.length} packages select ho gaye`);
 }
 
 function mealHeader(meal, title, icon, note, sub) {
@@ -543,12 +560,19 @@ function updateCartBadge() {
   if (b) b.textContent = cart.reduce((s,i) => s + i.qty, 0);
 }
 
-function toast(msg, type='success') {
+function toast(msg, type='success', action) {
   const t = document.createElement('div');
   t.className = 'toast ' + type;
-  t.textContent = msg;
+  // an "action" toast is a link the user can tap to act on the message
+  if (action === 'cart') {
+    t.classList.add('toast-action');
+    t.innerHTML = `<span>${msg}</span><b>Cart kholo →</b>`;
+    t.onclick = () => { t.remove(); goCart(); };
+  } else {
+    t.textContent = msg;
+  }
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2500);
+  setTimeout(() => t.remove(), action === 'cart' ? 4200 : 2500);
 }
 
 function genOrderId() {
@@ -575,8 +599,8 @@ function route() {
   if (r !== 'admin' && window.OrderNotify) window.OrderNotify.unmount();
   // arriving at the admin panel arms the ring straight away, no button press
   if (r === 'admin' && window.OrderNotify) window.OrderNotify.mount();
-  // the selection bar belongs to the menu page only
-  if (r !== 'menu') {
+  // the selection bar lives on the menu and packages pages
+  if (r !== 'menu' && r !== 'packages') {
     picked = [];
     const bar = document.getElementById('pickBar');
     if (bar) { bar.className = 'pick-bar'; bar.innerHTML = ''; }
@@ -590,24 +614,39 @@ window.addEventListener('hashchange', route);
 // ===== PAGES =====
 
 function renderPackages(app) {
+  picked = [];
   app.innerHTML = `
     <div class="page" style="max-width:1200px">
       <h2>💎 Saare Tiffin Packages</h2>
-      <p style="color:var(--muted);margin-bottom:2rem">Har package ka poora 7-din ka menu neeche diya hai. Weekly ya Monthly — jo chahiye order karo.</p>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Har package ka poora 7-din ka menu neeche diya hai. Package card par <b>✓</b> dabaake select karo, phir ek saath cart mein daalo — ya seedha <b>🛒 Add</b> button se cart mein daalo.</p>
+
+      <div class="menu-toolbar">
+        <div class="menu-tools">
+          <button class="btn btn-sm btn-secondary" onclick="selectAllPackages()">☑️ Saare Packages Select</button>
+          <button class="btn btn-sm btn-secondary" onclick="clearPicks()">Clear</button>
+        </div>
+        <div style="color:var(--muted);font-size:0.85rem">
+          🛒 = cart mein daalo · ⚡ = abhi buy karo · ✓ = select karke ek saath
+        </div>
+      </div>
 
       <div class="pkg-strip">
         ${PACKAGES.map(p => `
-          <div class="pkg-strip-card">
+          <div class="pkg-strip-card picked-host" id="card-pkg-${p.id}">
+            <button class="pick" id="pick-pkg_${p.id}_week" onclick="togglePickPkg('${p.id}','week')"
+                    title="Select karke ek saath cart mein daalo" aria-label="Select ${p.name}">
+              <span class="pick-box">✓</span>
+            </button>
             ${pkgHero(p, 'compact')}
             <div class="ps-name">${p.name}</div>
             <div class="ps-meals">${p.meals} · ${p.desc}</div>
             <div class="ps-price">₹${p.weekNew}<small>/week</small></div>
             <div class="ps-save">${p.save} bachat · Monthly ₹${p.monthNew}</div>
             <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
-              <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','week')">Weekly</button>
-              <button class="btn btn-green btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','month')">Monthly</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','week')">🛒 Weekly ₹${p.weekNew}</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="orderPackage('${p.id}','month')">🛒 Monthly ₹${p.monthNew}</button>
             </div>
-            <button class="btn btn-green btn-sm" style="width:100%;justify-content:center" onclick="buyPackageNow('${p.id}','week')">⚡ Buy This Single ₹${p.weekNew}</button>
+            <button class="btn btn-green btn-sm" style="width:100%;justify-content:center" onclick="buyPackageNow('${p.id}','week')">⚡ Buy Now ₹${p.weekNew}</button>
           </div>
         `).join('')}
       </div>
@@ -627,7 +666,9 @@ function renderPackages(app) {
           todayName())}</div>
       `).join('')}
     </div>
+    <div class="pick-bar" id="pickBar"></div>
   `;
+  renderPickBar();
 }
 
 function renderHome(app) {
@@ -735,8 +776,12 @@ function pkgHero(p, cls) {
 
 function renderPkgCard(p) {
   return `
-    <div class="pkg-card ${p.featured ? 'featured' : ''}" id="pkg-${p.id}">
+    <div class="pkg-card ${p.featured ? 'featured' : ''}" id="card-pkg-${p.id}">
       ${p.featured ? '<span class="badge">Best Value</span>' : ''}
+      <button class="pick" id="pick-pkg_${p.id}_week" onclick="togglePickPkg('${p.id}','week')"
+              title="Select karke ek saath cart mein daalo" aria-label="Select ${p.name}">
+        <span class="pick-box">✓</span>
+      </button>
       ${pkgHero(p)}
       <h3>${p.name}</h3>
       <div class="pkg-type">${p.meals}</div>
@@ -746,11 +791,11 @@ function renderPkgCard(p) {
       <div style="margin-top:0.5rem;color:var(--muted);font-size:0.9rem">₹${p.monthNew}/month <span style="text-decoration:line-through">₹${p.monthOld}</span> · ${p.monthSave} ki bachat</div>
 
       <div class="pkg-actions">
-        <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">Order Week ₹${p.weekNew}</button>
-        <button class="btn btn-secondary btn-sm" onclick="orderPackage('${p.id}','month')">Month ₹${p.monthNew}</button>
+        <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">🛒 Add Weekly ₹${p.weekNew}</button>
+        <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','month')">🛒 Add Monthly ₹${p.monthNew}</button>
       </div>
       <div class="pkg-actions">
-        <button class="btn btn-green btn-sm" style="flex:1" onclick="buyPackageNow('${p.id}','week')">⚡ Buy This Single ₹${p.weekNew}</button>
+        <button class="btn btn-green btn-sm" style="flex:1" onclick="buyPackageNow('${p.id}','week')">⚡ Buy Now ₹${p.weekNew}</button>
       </div>
       <div class="toggle-hint" onclick="togglePkg('${p.id}')" style="cursor:pointer">
         <span class="arrow">▼</span> Poora weekly menu dekho
@@ -774,8 +819,8 @@ function renderPkgCard(p) {
         </div>
         <div style="margin-top:1rem;color:var(--muted);font-size:0.8rem;line-height:1.5">${p.note}</div>
         <div class="pkg-actions">
-          <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">🍱 Weekly Order Karo</button>
-          <button class="btn btn-green btn-sm" onclick="orderPackage('${p.id}','month')">📅 Monthly Order Karo</button>
+          <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">🛒 Add Weekly to Cart</button>
+          <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','month')">🛒 Add Monthly to Cart</button>
         </div>
       </div>
     </div>
@@ -808,8 +853,8 @@ function renderWeekBlock(p) {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.8rem;margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border)">
         <div style="color:var(--muted);font-size:0.85rem;max-width:520px">${p.note}</div>
         <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">Weekly ₹${p.weekNew}</button>
-          <button class="btn btn-green btn-sm" onclick="orderPackage('${p.id}','month')">Monthly ₹${p.monthNew}</button>
+          <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','week')">🛒 Add Weekly ₹${p.weekNew}</button>
+          <button class="btn btn-primary btn-sm" onclick="orderPackage('${p.id}','month')">🛒 Add Monthly ₹${p.monthNew}</button>
         </div>
       </div>
     </div>
@@ -817,8 +862,38 @@ function renderWeekBlock(p) {
 }
 
 function togglePkg(id) {
-  const el = document.getElementById('pkg-' + id);
+  const el = document.getElementById('card-pkg-' + id);
   if (el) el.classList.toggle('open');
+}
+
+/* ---------- package multi-select ---------- */
+
+// Packages can be ticked alongside dishes: everything lands in the cart in
+// one go, and delivery is still charged only once.
+function togglePickPkg(id, period) {
+  const key = 'pkg_' + id + '_' + period;
+  const i = picked.indexOf(key);
+  if (i === -1) picked.push(key); else picked.splice(i, 1);
+  syncPickUI();
+}
+
+// A picked key is either a dish id or "pkg_<id>_<period>".
+function pickedEntry(key) {
+  if (key.indexOf('pkg_') === 0) {
+    const parts = key.split('_');           // pkg, <id>, <period>
+    const period = parts[parts.length - 1];
+    const pid = parts.slice(1, -1).join('_');
+    const p = PACKAGES.find(x => x.id === pid);
+    if (p) return pkgToItem(p, period);
+    return null;
+  }
+  const it = menuItemById(key);
+  return it ? { ...it, qty: 1 } : null;
+}
+
+// Every picked line, dishes and packages alike.
+function pickedLines() {
+  return picked.map(pickedEntry).filter(Boolean);
 }
 
 function orderPackage(id, period) {
@@ -829,7 +904,21 @@ function orderPackage(id, period) {
   if (existing) existing.qty++;
   else cart.push(item);
   saveCart();
-  toast(`${p.name} (${period === 'week' ? 'weekly' : 'monthly'}) cart mein add ho gaya!`);
+  pulseCartBadge();
+  toast(`🛒 ${p.name} (${period === 'week' ? 'Weekly' : 'Monthly'}) cart mein add ho gaya — ₹${item.price}`, 'success', 'cart');
+}
+
+// Make the cart button jump so the add is visible even when the cart is
+// off-screen. The button is the badge's parent.
+function pulseCartBadge() {
+  const b = document.getElementById('cartBadge');
+  if (!b) return;
+  const btn = b.closest ? b.closest('.cart-btn') : b.parentElement;
+  if (!btn || !btn.classList) return;
+  btn.classList.remove('pulse');
+  void btn.offsetWidth;      // restart the animation
+  btn.classList.add('pulse');
+  setTimeout(() => btn.classList.remove('pulse'), 900);
 }
 
 // package -> a cart-shaped line item

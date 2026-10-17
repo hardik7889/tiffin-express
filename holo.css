@@ -450,6 +450,33 @@ nav .cart-btn .badge {
   box-shadow:0 14px 40px rgba(0,0,0,.5);
 }
 .toast.error { background:linear-gradient(120deg,#ff5252,#ff5ec8); }
+.toast-action {
+  display:flex; align-items:center; gap:1rem; cursor:pointer;
+  padding-right:1rem;
+}
+.toast-action b {
+  font-family:'Orbitron',sans-serif; font-size:.68rem; letter-spacing:.05em;
+  text-transform:uppercase; white-space:nowrap;
+  background:rgba(5,6,15,.28); border-radius:999px; padding:5px 12px;
+}
+.toast-action:hover { filter:brightness(1.06); }
+
+/* cart badge jump so an add is visible even when the cart is off-screen */
+nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
+@keyframes cartPulse {
+  0%   { transform:scale(1);    box-shadow:0 0 18px rgba(0,240,255,.45); }
+  35%  { transform:scale(1.16); box-shadow:0 0 34px rgba(78,204,163,.95); }
+  70%  { transform:scale(0.97); }
+  100% { transform:scale(1);    box-shadow:0 0 18px rgba(0,240,255,.45); }
+}
+
+/* a picked package card reads as selected, same as a dish card */
+.pkg-card.picked, .pkg-strip-card.picked {
+  border-color:var(--mint);
+  box-shadow:0 0 0 1px rgba(78,204,163,.55), 0 0 32px rgba(78,204,163,.22);
+}
+/* any card that hosts a .pick button needs to be a positioning context */
+.picked-host { position:relative; }
 
 /* ===== PACKAGE HERO PHOTO (3D banner) ===== */
 .pkg-hero {

@@ -80,6 +80,7 @@ const wrapped = inline + `
   picked: () => picked, setPicked: v => { picked = v; },
   deliveryFor, isSingleBuy, isPackageLine, cartDelivery, cartTotal,
   togglePick, clearPicks, pickedItems, addPickedToCart, buyPicked, selectAllVisible,
+  togglePickPkg, pickedEntry, pickedLines, selectAllPackages, orderPackage,
   addToCart, buyNow, showCheckout, placeOrder, pkgToItem, PACKAGES, SINGLE_DELIVERY };
 `;
 const mod = { exports: {} };
@@ -192,6 +193,73 @@ api.buyPicked();
 const m4 = nodes[nodes.length - 1];
 t('one picked dish -> 49', /₹49/.test(m4.innerHTML));
 t('total 124 not 75', /₹124/.test(m4.innerHTML), m4.innerHTML.match(/₹\d+/g));
+
+console.log('\n--- package multi-select ---');
+api.clearPicks(); api.setCart([]);
+api.togglePickPkg('full', 'week');
+t('package tick registers', api.picked().length === 1);
+t('picked key is the package key', api.picked()[0] === 'pkg_full_week');
+const pl = api.pickedLines();
+t('pickedLines resolves the package', pl.length === 1 && pl[0].isPackage === true);
+t('package line carries weekly price', pl[0].price === 1499, 'price=' + pl[0].price);
+t('package-only selection is delivery FREE', api.deliveryFor(pl) === 0);
+
+console.log('\n--- mixing packages and dishes ---');
+api.togglePick('l1');   // Rajma Chawal 75
+api.togglePick('d3');   // Paneer Tikka Masala 90
+const mix = api.pickedLines();
+t('three lines total', mix.length === 3, 'n=' + mix.length);
+t('two dishes + one package', mix.filter(l => !l.isPackage).length === 2 && mix.filter(l => l.isPackage).length === 1);
+t('mixed selection charges Rs 49 once', api.deliveryFor(mix) === 49);
+const mixSub = mix.reduce((s, i) => s + i.price * (i.qty || 1), 0);
+t('mixed subtotal 1664', mixSub === 1664, 'sub=' + mixSub);
+
+console.log('\n--- bulk add with a package ---');
+api.addPickedToCart();
+t('cart has all three lines', api.cart().length === 3, 'cart=' + api.cart().length);
+t('package is in the cart', api.cart().some(c => c.id === 'pkg_full_week'));
+t('cart delivery is 49 once', api.cartDelivery() === 49);
+t('cart total 1713', api.cartTotal() === 1713, 'total=' + api.cartTotal());
+
+console.log('\n--- bulk buy with a package ---');
+api.clearPicks(); api.setCart([]);
+api.togglePickPkg('bf', 'month');    // Breakfast monthly 1650
+api.togglePick('l5');                // Veg Biryani 100
+api.buyPicked();
+const mp = nodes[nodes.length - 1];
+t('checkout modal opened', !!mp);
+t('modal lists the package', /Breakfast Only/.test(mp.innerHTML));
+t('modal lists the dish', /Veg Biryani/.test(mp.innerHTML));
+t('subtotal 1750 shown', /₹1750/.test(mp.innerHTML), mp.innerHTML.match(/₹\d+/g));
+t('delivery 49 charged once', /₹49/.test(mp.innerHTML));
+t('total 1799 shown', /₹1799/.test(mp.innerHTML), mp.innerHTML.match(/₹\d+/g));
+
+console.log('\n--- package-only bulk buy is FREE delivery ---');
+api.clearPicks(); api.setCart([]);
+api.togglePickPkg('full', 'week');
+api.togglePickPkg('bf', 'week');
+api.buyPicked();
+const mp2 = nodes[nodes.length - 1];
+t('two packages -> FREE delivery', /FREE/.test(mp2.innerHTML));
+t('no Rs 49 on package-only order', !/₹49/.test(mp2.innerHTML), mp2.innerHTML.match(/₹\d+/g));
+t('total is 1499 + 420 = 1919', /₹1919/.test(mp2.innerHTML), mp2.innerHTML.match(/₹\d+/g));
+
+console.log('\n--- select all packages ---');
+api.clearPicks();
+api.selectAllPackages();
+t('all 5 packages selected', api.picked().length === 5, 'n=' + api.picked().length);
+t('all resolve as packages', api.pickedLines().every(l => l.isPackage));
+t('package-only select-all is FREE', api.deliveryFor(api.pickedLines()) === 0);
+
+console.log('\n--- direct orderPackage still adds to cart ---');
+api.clearPicks(); api.setCart([]);
+api.orderPackage('ld', 'month');
+t('one line added', api.cart().length === 1);
+t('correct package + period', api.cart()[0].id === 'pkg_ld_month');
+t('monthly price used', api.cart()[0].price === 4200, 'price=' + api.cart()[0].price);
+api.orderPackage('ld', 'month');
+t('same package bumps qty', api.cart()[0].qty === 2);
+t('package-only cart is FREE', api.cartDelivery() === 0);
 
 console.log(`\n===== ${pass} passed, ${fail} failed =====`);
 process.exit(fail ? 1 : 0);
