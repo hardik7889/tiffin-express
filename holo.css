@@ -848,24 +848,29 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
   .pb-actions .btn { flex:1; justify-content:center; }
 }
 
-/* the brand line under the extruded eyebrow */
-.hero-subline {
-  font-family:'Orbitron',sans-serif;
-  font-size:clamp(17px,2.7vw,30px);
-  font-weight:900;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  margin:0 0 1.4rem;
-  line-height:1.2;
-  background-image:repeating-linear-gradient(90deg,#ffd700,#5ee7ff,#ff5ec8,#ffd700);
-  background-size:300% 100%;
-  -webkit-background-clip:text; background-clip:text;
-  -webkit-text-fill-color:transparent; color:transparent;
-  animation:hueSlide 7s linear infinite;
-  filter:drop-shadow(0 0 22px rgba(94,231,255,.5)) drop-shadow(0 3px 0 rgba(0,0,0,.55));
+/* the brand line under the extruded eyebrow — bigger and deeper 3D */
+.hero-brand {
+  padding-top:30px;
+  margin-bottom:22px;
+}
+.hero-brand i {
+  font-size:clamp(26px,5.4vw,58px) !important;
+  letter-spacing:.10em;
+  /* 16 stacked offsets give a much deeper extruded body than the eyebrow */
+  text-shadow:
+    0 1px 0 #0b4a59, 0 2px 0 #0a4553, 0 3px 0 #09404d,
+    0 4px 0 #083b47, 0 5px 0 #073641, 0 6px 0 #06313b,
+    0 7px 0 #052c35, 0 8px 0 #04272f, 0 9px 0 #032229,
+    0 10px 0 #021d23, 0 11px 0 #02181d, 0 12px 0 #011317,
+    0 13px 0 #010e11, 0 14px 0 #00090b, 0 15px 0 #000405,
+    0 16px 0 #000000,
+    0 20px 26px rgba(0,0,0,.85),
+    0 0 30px rgba(94,231,255,.75),
+    0 0 70px rgba(94,231,255,.45);
 }
 @media (max-width:620px) {
-  .hero-subline { letter-spacing:.09em; margin-bottom:1.1rem; }
+  .hero-brand { padding-top:22px; }
+  .hero-brand i { letter-spacing:.05em; }
 }
 
 /* ---------- 3D extruded eyebrow (per-letter arc) ---------- */

@@ -171,31 +171,36 @@
   }
 
   /* ---------- 3. 3D extruded hero copy ---------- */
+  // Build the per-letter 3D arc for every .eyebrow-3d on the page, so the
+  // brand line gets the same extruded treatment as the service eyebrow.
   function buildExtrude() {
-    var el = document.querySelector('.hero .eyebrow-3d');
-    if (!el || el.dataset.built === '1') return;
-    el.dataset.built = '1';
-    var txt = el.getAttribute('data-text') || el.textContent;
-    el.textContent = '';
-    var frag = document.createDocumentFragment();
-    var pal = ['#5ee7ff', '#7b5cff', '#ff00e5', '#ffd700', '#4ade80'];
-    for (var i = 0; i < txt.length; i++) {
-      var ch = txt[i];
-      var span = document.createElement('i');
-      span.textContent = ch === ' ' ? '\u00a0' : ch;
-      // per-letter arc: middle letters lift and push forward
-      var mid = (txt.length - 1) / 2;
-      var off = (i - mid) / (mid || 1);
-      var lift = Math.cos(off * 1.35) * 10;
-      var depth = Math.cos(off * 1.35) * 26;
-      span.style.transform =
-        'translateY(' + (-lift).toFixed(2) + 'px) translateZ(' + depth.toFixed(2) + 'px) ' +
-        'rotateX(' + (off * -7).toFixed(2) + 'deg)';
-      span.style.color = pal[i % pal.length];
-      span.style.animationDelay = (-i * .12).toFixed(2) + 's';
-      frag.appendChild(span);
+    var els = document.querySelectorAll('.hero .eyebrow-3d');
+    for (var n = 0; n < els.length; n++) {
+      var el = els[n];
+      if (el.dataset.built === '1') continue;
+      el.dataset.built = '1';
+      var txt = el.getAttribute('data-text') || el.textContent;
+      el.textContent = '';
+      var frag = document.createDocumentFragment();
+      var pal = ['#5ee7ff', '#7b5cff', '#ff00e5', '#ffd700', '#4ade80'];
+      for (var i = 0; i < txt.length; i++) {
+        var ch = txt[i];
+        var span = document.createElement('i');
+        span.textContent = ch === ' ' ? '\u00a0' : ch;
+        // per-letter arc: middle letters lift and push forward
+        var mid = (txt.length - 1) / 2;
+        var off = (i - mid) / (mid || 1);
+        var lift = Math.cos(off * 1.35) * 10;
+        var depth = Math.cos(off * 1.35) * 26;
+        span.style.transform =
+          'translateY(' + (-lift).toFixed(2) + 'px) translateZ(' + depth.toFixed(2) + 'px) ' +
+          'rotateX(' + (off * -7).toFixed(2) + 'deg)';
+        span.style.color = pal[i % pal.length];
+        span.style.animationDelay = (-i * .12).toFixed(2) + 's';
+        frag.appendChild(span);
+      }
+      el.appendChild(frag);
     }
-    el.appendChild(frag);
   }
 
   /* ---------- 4. pointer-tracked 3D tilt on photos ---------- */
