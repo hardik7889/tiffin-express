@@ -245,7 +245,10 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 
 <nav>
   <a href="#/" class="logo">🍱 TiffinExpress</a>
-  <div class="nav-links">
+  <button class="hamburger" id="hamburgerBtn" aria-label="Menu" onclick="toggleHamburger()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="navLinks">
     <a href="#/" data-route="home">Home</a>
     <a href="#/packages" data-route="packages">Packages</a>
     <a href="#/menu" data-route="menu">Menu</a>
@@ -255,6 +258,7 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
     <button class="cart-btn" onclick="goCart()">🛒 <span class="badge" id="cartBadge">0</span></button>
   </div>
 </nav>
+<button class="mobile-cart-fab" id="mobileCartFab" onclick="goCart()" aria-label="Cart">🛒</button>
 
 <div id="app"></div>
 
@@ -269,6 +273,24 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
 <script src="location.js"></script>
 <script src="whatsapp.js"></script>
 <script>
+// ===== Mobile nav toggle =====
+function toggleHamburger() {
+  var links = document.getElementById('navLinks');
+  var btn = document.getElementById('hamburgerBtn');
+  if (!links) return;
+  var open = links.classList.toggle('open');
+  if (btn) btn.classList.toggle('open', open);
+  // close after tapping a link
+  if (open) {
+    links.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        links.classList.remove('open');
+        if (btn) btn.classList.remove('open');
+      }, { once: true });
+    });
+  }
+}
+
 // ===== MEAL CARD RENDERER (3D food photo) =====
 function artFor(id) {
   const f = (typeof FOOD_ART !== 'undefined') && FOOD_ART[id];

@@ -48,6 +48,8 @@ body {
 nav, #app, footer { position:relative; z-index:3; }
 
 /* ---------- nav ---------- */
+nav .hamburger { display:none; }
+.mobile-cart-fab { display:none; }
 nav {
   position:fixed; top:0; left:0; right:0; z-index:1000;
   height:auto; padding:14px 28px;
@@ -101,7 +103,7 @@ nav .cart-btn .badge {
 }
 .hero h1 {
   font-family:'Orbitron',sans-serif;
-  font-size:clamp(38px,7vw,84px); font-weight:900; line-height:1.08;
+  font-size:clamp(28px,7vw,84px); font-weight:900; line-height:1.08;
   margin-bottom:1.2rem; letter-spacing:-.02em;
   background-image:repeating-linear-gradient(90deg,#00f0ff,#ff00e5,#7b2fff,#00f0ff,#ff00e5);
   background-size:400% 100%;
@@ -855,7 +857,7 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
   margin-bottom:22px;
 }
 .hero-brand i {
-  font-size:clamp(26px,5.4vw,58px) !important;
+  font-size:clamp(20px,5.4vw,58px) !important;
   letter-spacing:.10em;
   /* 16 stacked offsets give a much deeper extruded body than the eyebrow */
   text-shadow:
@@ -1123,19 +1125,353 @@ section[id], div[id] { scroll-margin-top:88px; }
   .meal-art { height:140px; }
 }
 @media (max-width:620px) {
-  nav { padding:12px 16px; }
-  .meal-grid { grid-template-columns:1fr 1fr; gap:12px; }
-  .meal-art { height:126px; }
-  .meal-desc { display:none; }
   .stats { gap:24px; }
   .stat .num { font-size:24px; }
-}
-@media (max-width:430px) {
-  .meal-grid { grid-template-columns:1fr; }
-  .meal-art { height:170px; }
 }
 
 @media (prefers-reduced-motion:reduce) {
   *, *::before, *::after { animation:none !important; transition:none !important; }
   .meal-art .art-glow { transform:none; opacity:.85; }
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE — comprehensive fixes for phones
+   ============================================================ */
+
+/* ---------- Nav: hamburger menu on mobile ---------- */
+@media (max-width:768px) {
+  nav { padding:10px 16px; height:56px; }
+  nav .logo { font-size:13px; letter-spacing:.15em; }
+  nav .nav-links {
+    position:fixed; top:56px; left:0; right:0;
+    background:rgba(4,1,13,.98);
+    backdrop-filter:blur(20px);
+    flex-direction:column; align-items:stretch;
+    padding:0; gap:0;
+    max-height:0; overflow:hidden;
+    transition:max-height .3s ease;
+    border-bottom:1px solid transparent;
+    z-index:999;
+  }
+  nav .nav-links.open {
+    max-height:400px;
+    padding:8px 0;
+    border-bottom:1px solid var(--border);
+  }
+  nav .nav-links a {
+    padding:14px 24px; font-size:15px;
+    border-bottom:1px solid rgba(94,231,255,.06);
+  }
+  nav .nav-links a:last-child { border-bottom:none; }
+  nav .cart-btn { display:none; }
+  /* hamburger button */
+  nav .hamburger {
+    display:flex; flex-direction:column; justify-content:center;
+    gap:5px; width:40px; height:40px;
+    background:transparent; border:1px solid var(--border);
+    border-radius:10px; cursor:pointer; padding:8px;
+  }
+  nav .hamburger span {
+    display:block; height:2px; width:100%;
+    background:var(--cyan); border-radius:2px;
+    transition:transform .3s, opacity .3s;
+  }
+  nav .hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+  nav .hamburger.open span:nth-child(2) { opacity:0; }
+  nav .hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+  /* floating cart button on mobile */
+  .mobile-cart-fab {
+    display:flex; position:fixed; bottom:20px; right:20px;
+    width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg,#00f0ff,#7b2fff);
+    color:#05060f; border:none; cursor:pointer;
+    align-items:center; justify-content:center;
+    font-size:24px; z-index:998;
+    box-shadow:0 4px 20px rgba(0,240,255,.5);
+    transition:transform .3s;
+  }
+  .mobile-cart-fab:active { transform:scale(.95); }
+}
+
+/* ---------- Hero ---------- */
+@media (max-width:768px) {
+  /* prevent any horizontal overflow */
+  html, body { overflow-x:hidden; max-width:100vw; }
+  * { max-width:100%; box-sizing:border-box; }
+
+  .hero {
+    padding:80px 16px 50px;
+    min-height:auto;
+    overflow:hidden;
+  }
+  .hero h1 {
+    font-size:clamp(24px,6.5vw,48px);
+    line-height:1.15;
+    margin-bottom:1rem;
+    word-break:break-word;
+    overflow-wrap:break-word;
+  }
+  .hero p {
+    font-size:14px;
+    max-width:100%;
+    padding:0 8px;
+    margin-bottom:1.8rem;
+    word-break:break-word;
+    overflow-wrap:break-word;
+  }
+  .hero .cta-row {
+    flex-direction:column; gap:12px;
+    width:100%; max-width:320px;
+  }
+  .hero .cta-row .btn {
+    width:100%; padding:14px 20px;
+    font-size:13px; justify-content:center;
+  }
+  .hero .eyebrow-3d {
+    font-size:11px !important;
+    letter-spacing:.08em !important;
+    padding-top:14px;
+    white-space:normal !important;
+    word-break:break-word;
+  }
+  .hero .hero-brand i {
+    font-size:clamp(18px,4.5vw,40px) !important;
+    letter-spacing:.06em !important;
+    white-space:normal !important;
+    word-break:break-word;
+  }
+  .hero .stats {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:20px; margin-top:2.5rem;
+  }
+  .hero .stat .num { font-size:28px; }
+  .hero .stat .lbl { font-size:12px; }
+
+  /* nav mobile */
+  nav { padding:10px 12px; height:auto; flex-wrap:wrap; }
+  nav .logo { font-size:1.1rem; }
+  nav .nav-links { gap:8px; flex-wrap:wrap; }
+  nav .nav-links a { font-size:10px; padding:4px 6px; }
+  nav .cart-btn { padding:6px 10px; font-size:12px; }
+
+  /* buttons */
+  .btn { padding:12px 18px; font-size:11px; min-height:44px; }
+  .btn-sm { padding:10px 14px; font-size:10px; min-height:40px; }
+
+  /* cards */
+  .meal-grid { grid-template-columns:1fr; gap:12px; }
+  .meal-card { padding:14px; }
+  .meal-name { font-size:1.15rem; }
+  .meal-desc { font-size:0.85rem; }
+  .meal-price { font-size:1.25rem; }
+
+  /* week menu rows */
+  .week-meal { font-size:0.9rem; padding:8px 0; }
+  .wm-name { font-size:0.9rem; }
+  .wm-price { font-size:0.95rem; }
+  .wm-buy, .wm-add { font-size:8px; padding:5px 8px; min-height:32px; }
+  .wm-pick { width:22px; height:22px; font-size:12px; }
+
+  /* packages */
+  .pkg-grid { grid-template-columns:1fr; gap:12px; }
+  .pkg-card { padding:14px; }
+
+  /* cart */
+  .cart-item { flex-direction:column; align-items:flex-start; gap:8px; }
+  .cart-item .ci-name { font-size:0.95rem; }
+
+  /* checkout modal */
+  .modal { max-width:95vw !important; margin:10px !important; padding:16px !important; }
+  .modal h3 { font-size:1.2rem; }
+  .form-group input, .form-group textarea, .form-group select {
+    font-size:16px; padding:12px;
+  }
+
+  /* admin */
+  .admin-grid { grid-template-columns:1fr; gap:12px; }
+  .admin-card { padding:14px; }
+  .adm-map { height:150px; }
+  .wa-setting { flex-direction:column; align-items:stretch; text-align:center; }
+  .was-input { width:100%; }
+
+  /* order cards */
+  .order-card { padding:14px; }
+  .order-wa .wa-btn { width:100%; justify-content:center; }
+
+  /* contact cards */
+  .contact-cards { grid-template-columns:1fr; }
+  .cc-wa { width:100%; justify-content:center; }
+
+  /* location picker */
+  .loc-map { height:200px; }
+  .loc-btn { width:100%; justify-content:center; }
+  .loc-search-row { flex-direction:column; }
+  .loc-search-btn { width:100%; }
+
+  /* hide decorative elements that cause overflow */
+  .eyebrow-3d { white-space:normal !important; }
+}
+
+/* ---------- Sections ---------- */
+@media (max-width:768px) {
+  .section { padding:2rem 1rem; }
+  .section h2 { font-size:1.5rem; }
+  .section .sub { font-size:0.9rem; }
+  .page { padding:1rem; }
+  .page h2 { font-size:1.4rem; }
+}
+
+/* ---------- Meal cards ---------- */
+@media (max-width:768px) {
+  .meal-grid {
+    grid-template-columns:1fr;
+    gap:16px;
+  }
+  .meal-art { height:200px; }
+  .meal-name { font-size:1.2rem; }
+  .meal-desc { display:block; font-size:0.88rem; }
+  .meal-price { font-size:1.3rem; }
+  .meal-foot {
+    flex-direction:column; align-items:stretch; gap:12px;
+  }
+  .meal-foot-actions {
+    flex-direction:column; gap:8px;
+  }
+  .meal-foot-actions .add-btn,
+  .meal-foot-actions .buy-btn {
+    width:100%; padding:12px; font-size:13px;
+  }
+  .meal-card { padding:0; }
+  .meal-card .meal-art { border-radius:16px 16px 0 0; }
+  .meal-card .meal-day,
+  .meal-card .meal-name,
+  .meal-card .meal-desc,
+  .meal-card .meal-foot { padding-left:16px; padding-right:16px; }
+  .meal-card .meal-foot { padding-bottom:16px; }
+  /* pick button smaller on mobile */
+  .meal-card .pick {
+    width:36px; height:36px; font-size:16px;
+    top:10px; right:10px;
+  }
+}
+
+/* ---------- Week meal rows ---------- */
+@media (max-width:768px) {
+  .week-meal {
+    flex-wrap:wrap; padding:10px 8px; gap:6px;
+  }
+  .wm-thumb { width:44px; height:44px; }
+  .wm-tag { font-size:11px; padding:2px 8px; }
+  .wm-name { font-size:0.92rem; flex:1; min-width:100px; }
+  .wm-price { font-size:1rem; }
+  .wm-add, .wm-buy {
+    font-size:9px !important; padding:6px 10px !important;
+    width:100%; margin-top:4px;
+  }
+  .wm-pick { width:28px; height:28px; font-size:14px; }
+  .week-day-name { font-size:0.85rem; }
+}
+
+/* ---------- Package cards ---------- */
+@media (max-width:768px) {
+  .pkg-grid { grid-template-columns:1fr; gap:16px; }
+  .pkg-strip-card {
+    flex-direction:column; align-items:stretch;
+    padding:16px; gap:12px;
+  }
+  .pkg-strip-card .ps-price { font-size:1.6rem; }
+  .pkg-strip-card .ps-name { font-size:1.1rem; }
+}
+
+/* ---------- Cart ---------- */
+@media (max-width:768px) {
+  .cart-item {
+    flex-direction:column; gap:12px; padding:16px;
+  }
+  .cart-item-img { width:100%; height:140px; }
+  .cart-item-info { width:100%; }
+  .cart-item-name { font-size:1.1rem; }
+  .cart-item-price { font-size:1.2rem; }
+  .cart-summary { padding:16px; }
+  .cart-summary .btn { width:100%; justify-content:center; }
+  .pb-bar {
+    flex-direction:column; gap:12px;
+    padding:16px;
+  }
+  .pb-bar .btn { width:100%; justify-content:center; }
+}
+
+/* ---------- Checkout modal ---------- */
+@media (max-width:768px) {
+  .modal-overlay { padding:12px; }
+  .modal {
+    width:100%; max-width:100%;
+    padding:20px 16px;
+    max-height:90vh; overflow-y:auto;
+  }
+  .modal h3 { font-size:1.3rem; }
+  .modal .form-group input,
+  .modal .form-group textarea,
+  .modal .form-group select {
+    font-size:16px; /* prevent iOS zoom */
+    padding:14px;
+  }
+  .modal .btn { width:100%; justify-content:center; padding:14px; }
+  .modal .actions { flex-direction:column; gap:10px; }
+  .loc-btn { width:100%; justify-content:center; padding:14px; }
+  .loc-map { height:200px; }
+  .loc-search-row { flex-direction:column; }
+  .loc-search-row .loc-search-btn { width:100%; padding:12px; }
+}
+
+/* ---------- Orders ---------- */
+@media (max-width:768px) {
+  .order-card { padding:16px; }
+  .order-header { flex-direction:column; align-items:flex-start; gap:8px; }
+  .order-id { font-size:1rem; }
+  .order-total { font-size:1.3rem; }
+  .order-wa { flex-direction:column; gap:8px; }
+  .order-wa .wa-btn { width:100%; justify-content:center; }
+  .order-wa .wa-mini { width:100%; padding:12px; text-align:center; }
+}
+
+/* ---------- Admin ---------- */
+@media (max-width:768px) {
+  .admin-grid { grid-template-columns:1fr; gap:16px; }
+  .admin-card { padding:16px; }
+  .adm-map { height:160px; }
+  .adm-wa { flex-direction:column; gap:8px; }
+  .adm-wa .wa-btn { width:100%; justify-content:center; }
+  .adm-wa .wa-mini { width:100%; padding:12px; text-align:center; }
+  .wa-setting { flex-direction:column; align-items:stretch; text-align:center; gap:12px; }
+  .wa-setting .was-ico { align-self:center; font-size:2rem; }
+  .wa-setting .was-txt { text-align:center; }
+  .was-input { width:100%; }
+  .actions { flex-direction:column; gap:8px; }
+  .actions .btn { width:100%; justify-content:center; }
+  .adm-filters { flex-wrap:wrap; gap:8px; }
+  .adm-tab { flex:1; min-width:calc(50% - 8px); }
+  .adm-search { font-size:16px; padding:14px; }
+}
+
+/* ---------- Contact cards ---------- */
+@media (max-width:768px) {
+  .contact-cards { grid-template-columns:1fr; }
+  .contact-card { padding:20px 16px; }
+  .cc-wa { width:100%; justify-content:center; }
+}
+
+/* ---------- Footer ---------- */
+@media (max-width:768px) {
+  footer { padding:2rem 1rem; text-align:center; }
+  footer .footer-grid { grid-template-columns:1fr; gap:20px; }
+  footer .footer-links { flex-direction:column; gap:12px; }
+}
+
+/* ---------- Single column for very small screens ---------- */
+@media (max-width:380px) {
+  .hero h1 { font-size:26px; }
+  .hero .stat .num { font-size:24px; }
+  .meal-art { height:180px; }
+  .section h2 { font-size:1.3rem; }
 }
