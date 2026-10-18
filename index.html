@@ -1654,6 +1654,13 @@ function renderAdminGrid() {
           <span>Total</span><span>₹${o.total}</span>
         </div>
 
+        ${(o.customer.lat && o.customer.lon) ? `
+          <div class="adm-map-wrap">
+            <div class="adm-map" id="admMap-${o.id}"></div>
+            <div class="adm-map-lat">${o.customer.lat.toFixed(5)}, ${o.customer.lon.toFixed(5)}</div>
+          </div>
+        ` : ''}
+
         <div class="adm-wa">
           <button class="wa-btn" onclick="waCustomer('${o.id}')" title="Customer ko WhatsApp par order confirm bhejo">
             <span class="wa-ico">📲</span> Customer ko WhatsApp
@@ -1685,6 +1692,37 @@ function renderAdminGrid() {
       </div>
     `;
   }).join('');
+
+  // any order with a coordinate gets a live map
+  list.forEach(function (o) {
+    if (o.customer.lat && o.customer.lon) initAdminMap(o.id, o.customer.lat, o.customer.lon);
+  });
+}
+
+// One Leaflet map per order card. Re-created only when the card is
+// rendered, so a re-render (filter change, new order) is safe.
+const adminMaps = {};
+function initAdminMap(orderId, lat, lon) {
+  const el = document.getElementById('admMap-' + orderId);
+  if (!el) return;
+  if (typeof L === 'undefined') return;
+
+  // clear any previous map for this order
+  if (adminMaps[orderId]) { adminMaps[orderId].remove(); }
+
+  const m = L.map(el, {
+    zoomControl: false,
+    attributionControl: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    boxZoom: false,
+    touchZoom: true,
+  }).setView([lat, lon], 15);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m);
+  L.marker([lat, lon]).addTo(m);
+
+  adminMaps[orderId] = m;
 }
 
 function updateOrderStatus(id, status) {
