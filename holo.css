@@ -428,6 +428,11 @@ nav .cart-btn .badge {
   grid-template-columns:repeat(auto-fit,minmax(330px,1fr));
   gap:0.9rem 1.4rem;
 }
+/* On a phone the two columns would never fit: go single-column so the
+   price and the Add/Buy buttons stay on screen instead of overflowing. */
+@media (max-width:768px) {
+  .week-grid { grid-template-columns:1fr; gap:0.9rem; }
+}
 
 /* Each meal row is two lines:
      line 1  thumb  tag  name ............ price
@@ -575,7 +580,10 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
   background:radial-gradient(ellipse, rgba(94,231,255,.30) 0%, rgba(255,94,200,.14) 46%, transparent 74%);
   filter:blur(20px); z-index:1;
   animation:holoPulse 5.2s ease-in-out infinite;
+  pointer-events:none;
 }
+/* keep the blurred glow from registering as page overflow */
+.pkg-hero { overflow:hidden; }
 .pkg-photo {
   position:relative; z-index:2;
   width:100%; height:100%; object-fit:cover;
@@ -1504,6 +1512,14 @@ section[id], div[id] { scroll-margin-top:88px; }
   }
   .pkg-strip-card .ps-price { font-size:1.6rem; }
   .pkg-strip-card .ps-name { font-size:1.1rem; }
+
+  /* stack the two Add buttons so neither runs off the right edge */
+  .pkg-actions { flex-wrap:wrap; gap:0.6rem; }
+  .pkg-actions .btn { flex:1 1 100%; justify-content:center; }
+
+  /* long dish names must be able to shrink instead of pushing the row wide */
+  .week-meal { min-width:0; }
+  .wm-name { min-width:0; overflow-wrap:anywhere; }
 }
 
 /* ---------- Cart ---------- */
