@@ -1029,6 +1029,103 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
 .cc-role { font-size:.85rem; color:var(--dim); margin-top:-0.4rem; }
 .cc-wa { margin-top:0.6rem; width:100%; justify-content:center; }
 
+/* ---------- admin login card (inside My Orders) ---------- */
+.admin-login-card {
+  margin-top: 2.5rem; padding: 2rem 1.6rem; border-radius: 20px;
+  max-width: 460px; margin-left: auto; margin-right: auto;
+  display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
+  background: linear-gradient(140deg, rgba(18,18,26,.95), rgba(12,12,20,.9));
+  border: 1px solid rgba(123,47,255,.28);
+  box-shadow: 0 0 50px rgba(123,47,255,.07);
+  text-align: center;
+}
+.alc-ico { font-size: 2.2rem; line-height: 1; }
+.alc-title {
+  font-family: 'Orbitron', sans-serif; font-size: 1.15rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.alc-sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 0.4rem; }
+.alc-input {
+  width: 100%; padding: 0.75rem 1rem; border-radius: 12px;
+  background: rgba(5,6,15,.85); border: 1px solid rgba(123,47,255,.3);
+  color: var(--text); font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem; text-align: center;
+}
+.alc-input:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(123,47,255,.18); }
+.alc-btn { width: 100%; justify-content: center; margin-top: 0.3rem; }
+.alc-hint { color: var(--muted); font-size: 0.8rem; margin-top: 0.6rem; }
+.alc-hint b { color: var(--cyan); }
+
+@media (max-width: 768px) {
+  .admin-login-card { padding: 1.4rem 1.1rem; margin-top: 1.8rem; }
+  .alc-title { font-size: 1rem; }
+  .alc-sub { font-size: 0.8rem; }
+}
+
+/* ---------- embedded admin panel (inside My Orders) ---------- */
+.admin-section {
+  margin-top: 3rem;
+  padding: 2rem 1.4rem;
+  border-radius: 20px;
+  background: linear-gradient(140deg, rgba(18,18,26,.95), rgba(12,12,20,.9));
+  border: 1px solid rgba(123,47,255,.28);
+  box-shadow: 0 0 50px rgba(123,47,255,.07), inset 0 0 40px rgba(0,0,0,.3);
+}
+.adm-sec-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap; margin-bottom: 1.6rem;
+}
+.adm-sec-title {
+  font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.adm-sec-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+
+.adm-stats {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+.adm-stat {
+  padding: 0.9rem 0.5rem; border-radius: 12px; text-align: center;
+  background: rgba(94,231,255,.05); border: 1px solid rgba(94,231,255,.15);
+}
+.adm-stat .n {
+  font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 800;
+  color: var(--cyan);
+}
+.adm-stat .l { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+
+.adm-sec-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem;
+  margin-bottom: 1.4rem;
+}
+.adm-sec-stat {
+  display: flex; flex-direction: column; gap: 0.25rem; padding: 0.8rem 1rem;
+  border-radius: 12px; background: rgba(78,204,163,.06);
+  border: 1px solid rgba(78,204,163,.2);
+}
+.adm-sec-stat span { font-size: 0.78rem; color: var(--dim); }
+.adm-sec-stat b {
+  font-family: 'Orbitron', sans-serif; font-size: 1.15rem; color: var(--mint);
+}
+
+@media (max-width: 768px) {
+  .admin-section { padding: 1.2rem 1rem; margin-top: 2rem; }
+  .adm-sec-title { font-size: 1.05rem; }
+  .adm-sec-sub { font-size: 0.8rem; }
+  .adm-stats { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .adm-stat { padding: 0.6rem 0.4rem; }
+  .adm-stat .n { font-size: 1.15rem; }
+  .adm-stat .l { font-size: 0.62rem; }
+  .adm-sec-stats { grid-template-columns: 1fr; gap: 0.5rem; }
+  .adm-sec-stat { padding: 0.6rem 0.8rem; }
+  .adm-sec-stat b { font-size: 1rem; }
+}
+
 /* admin panel map preview */
 .adm-map-wrap {
   margin: 0.8rem 0; border-radius: 12px; overflow: hidden;

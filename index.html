@@ -254,7 +254,6 @@ nav .cart-btn .badge { position:absolute; top:-6px; right:-6px; background:var(-
     <a href="#/menu" data-route="menu">Menu</a>
     <a href="#/cart" data-route="cart">Cart</a>
     <a href="#/orders" data-route="orders">My Orders</a>
-    <a href="#/admin" data-route="admin" id="adminNav">🔐 Admin</a>
     <button class="cart-btn" onclick="goCart()">🛒 <span class="badge" id="cartBadge">0</span></button>
   </div>
 </nav>
@@ -634,18 +633,19 @@ function route() {
   else if (r === 'packages') renderPackages(app);
   else if (r === 'menu') renderMenu(app);
   else if (r === 'cart') renderCart(app);
-  else if (r === 'orders') renderOrders(app);
-  else if (r === 'admin') renderAdmin(app);
+  else if (r === 'orders' || r === 'admin') renderOrders(app);
   else renderHome(app);
-  // a phone must never sit on the admin route: customers get the home page
-  if (r === 'admin' && isMobile() && !isAdmin) {
-    location.replace('#/');
+  // The admin panel now lives inside My Orders. A visitor who is not signed
+  // in and not logged in lands on the home page instead.
+  if (r === 'admin' && !isAdmin) {
+    if (isMobile()) { location.replace('#/'); return; }
+    location.replace('#/orders');
     return;
   }
   // stop the order watcher as soon as the admin panel leaves the screen
-  if (r !== 'admin' && window.OrderNotify) window.OrderNotify.unmount();
+  if (r !== 'orders' && window.OrderNotify) window.OrderNotify.unmount();
   // arriving at the admin panel arms the ring straight away, no button press
-  if (r === 'admin' && window.OrderNotify) window.OrderNotify.mount();
+  if (r === 'orders' && isAdmin && window.OrderNotify) window.OrderNotify.mount();
   // the selection bar lives on the menu and packages pages
   if (r !== 'menu' && r !== 'packages') {
     picked = [];
@@ -1449,8 +1449,11 @@ function renderOrders(app) {
           <p>Menu se items add karo aur order karo</p>
           <a href="#/menu" class="btn btn-primary" style="margin-top:1rem">Menu Dekho</a>
         </div>
+
+        ${renderAdminLoginOrPanel()}
       </div>
     `;
+    if (isAdmin && typeof renderAdminGrid === 'function') renderAdminGrid();
     return;
   }
 
@@ -1489,7 +1492,97 @@ function renderOrders(app) {
         `;
       }).join('')}
     </div>
+
+    ${renderAdminLoginOrPanel()}
   `;
+  // the embedded admin grid is only rendered when the owner is signed in
+  if (isAdmin && typeof renderAdminGrid === 'function') renderAdminGrid();
+}
+
+// Admin area inside My Orders: the login card when the owner is not signed
+// in, the full control panel when they are.
+function renderAdminLoginOrPanel() {
+  if (!isAdmin) {
+    return `
+      <div class="admin-login-card">
+        <div class="alc-ico">🔐</div>
+        <div class="alc-title">Admin Login</div>
+        <div class="alc-sub">Orders manage karne ke liye password daalo</div>
+        <input type="password" id="adminPass" class="alc-input"
+               placeholder="Admin password"
+               onkeydown="if(event.key==='Enter')doAdminLogin()">
+        <button class="btn btn-primary alc-btn" onclick="doAdminLogin()">Login</button>
+        <div class="alc-hint">Default password: <b>admin123</b></div>
+      </div>
+    `;
+  }
+  return renderAdminSection();
+}
+
+// Admin panel, rendered inside My Orders for an authenticated admin only.
+// The nav link stays hidden so customers never see it — the owner reaches it
+// from this section.
+function renderAdminSection() {
+  if (!isAdmin) return '';
+  const c = statusCounts();
+  const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total || 0), 0);
+  const today = new Date().toDateString();
+  const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
+  return `
+    <div class="admin-section">
+      <div class="adm-sec-head">
+        <div>
+          <div class="adm-sec-title">🔐 Admin Panel</div>
+          <div class="adm-sec-sub">Saare orders — accept, cancel, deliver aur WhatsApp bhejo</div>
+        </div>
+        <button class="btn btn-sm btn-secondary" onclick="logoutAdmin()">Logout</button>
+      </div>
+
+      <div class="adm-stats">
+        <div class="adm-stat"><div class="n">${orders.length}</div><div class="l">Total</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--amber)">${c.pending}</div><div class="l">Pending</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--cyan)">${c.accepted}</div><div class="l">Accepted</div></div>
+        <div class="adm-stat"><div class="n" style="color:#7b2fff">${c.delivering}</div><div class="l">Delivering</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--green)">${c.delivered}</div><div class="l">Delivered</div></div>
+        <div class="adm-stat"><div class="n" style="color:var(--red)">${c.cancelled}</div><div class="l">Cancelled</div></div>
+      </div>
+
+      <div class="adm-sec-stats">
+        <div class="adm-sec-stat"><span>💰 Today's Revenue</span><b>₹${todayOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total || 0), 0)}</b></div>
+        <div class="adm-sec-stat"><span>📦 Today's Orders</span><b>${todayOrders.length}</b></div>
+        <div class="adm-sec-stat"><span>💵 Total Revenue</span><b>₹${revenue}</b></div>
+      </div>
+
+      <div class="wa-setting">
+        <div class="was-ico">📲</div>
+        <div class="was-txt">
+          <b>WhatsApp number — jahan order message jayega</b>
+          <span>Country code ke saath, sirf digits (jaise 919876543210)</span>
+        </div>
+        <input type="tel" id="waNumber" class="was-input"
+               placeholder="919876543210" value="${window.WA ? window.WA.shopNumber() : ''}">
+        <button class="btn btn-sm btn-green" onclick="saveWaNumber()">Save</button>
+      </div>
+
+      <div class="adm-toolbar">
+        <div class="adm-filters">
+          ${['all','pending','accepted','delivering','delivered','cancelled'].map(s => `
+            <button class="adm-tab ${s === 'all' ? 'active' : ''}" data-filter="${s}"
+                    onclick="filterAdmin('${s}')">
+              ${s === 'all' ? 'Saare' : getStatusShort(s)}
+              <span class="adm-tab-n">${s === 'all' ? orders.length : c[s]}</span>
+            </button>
+          `).join('')}
+        </div>
+        <input type="search" id="admSearch" class="adm-search" placeholder="🔍 Naam, phone ya Order ID se dhundo..."
+               oninput="renderAdminGrid()">
+      </div>
+
+      <div class="admin-grid" id="adminGrid"></div>
+    </div>
+  `;
+  // the ring/notification watcher follows the embedded admin area
+  if (window.OrderNotify) window.OrderNotify.mount();
 }
 
 function getStatusLabel(s) {
@@ -1521,81 +1614,6 @@ function syncAdminNav() {
   link.classList.toggle('admin-authed', isAdmin === true);
 }
 
-function renderAdmin(app) {
-  if (!isAdmin) {
-    app.innerHTML = `
-      <div class="page" style="max-width:440px">
-        <h2>🔐 Admin Login</h2>
-        <p style="color:var(--muted);margin-bottom:1.5rem">Order manage karne ke liye password daalo</p>
-        <div class="form-group"><label>Password</label><input type="password" id="adminPass" placeholder="Admin password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
-        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doAdminLogin()">Login</button>
-        <p style="color:var(--muted);font-size:0.8rem;margin-top:1rem;text-align:center">Default password: <b style="color:var(--cyan)">admin123</b></p>
-      </div>
-    `;
-    return;
-  }
-
-  const c = statusCounts();
-  const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total || 0), 0);
-  const today = new Date().toDateString();
-  const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
-
-  app.innerHTML = `
-    <div class="page" style="max-width:1280px">
-      <div class="admin-head">
-        <div>
-          <h2>🔐 Admin Dashboard</h2>
-          <p style="color:var(--muted);font-size:0.88rem">Saare orders yahan — accept, cancel, deliver sab kar sakte ho</p>
-        </div>
-        <button class="btn btn-sm btn-red" onclick="logoutAdmin()">Logout</button>
-      </div>
-
-      <div class="adm-stats">
-        <div class="adm-stat"><div class="n">${orders.length}</div><div class="l">Total Orders</div></div>
-        <div class="adm-stat"><div class="n">${todayOrders.length}</div><div class="l">Aaj ke</div></div>
-        <div class="adm-stat"><div class="n" style="color:var(--amber)">${c.pending}</div><div class="l">Pending</div></div>
-        <div class="adm-stat"><div class="n" style="color:var(--cyan)">${c.accepted}</div><div class="l">Accepted</div></div>
-        <div class="adm-stat"><div class="n" style="color:#b07cff">${c.delivering}</div><div class="l">Delivering</div></div>
-        <div class="adm-stat"><div class="n" style="color:var(--green)">${c.delivered}</div><div class="l">Delivered</div></div>
-        <div class="adm-stat"><div class="n" style="color:var(--red)">${c.cancelled}</div><div class="l">Cancelled</div></div>
-        <div class="adm-stat"><div class="n" style="color:var(--mint)">₹${revenue.toLocaleString('en-IN')}</div><div class="l">Revenue</div></div>
-      </div>
-
-      <div id="notifBar"></div>
-
-      <div class="wa-setting">
-        <div class="was-ico">📲</div>
-        <div class="was-txt">
-          <b>WhatsApp number — jahan order message jayega</b>
-          <span>Country code ke saath, sirf digits (jaise 919876543210)</span>
-        </div>
-        <input type="tel" id="waNumber" class="was-input"
-               placeholder="919876543210" value="${window.WA ? window.WA.shopNumber() : ''}">
-        <button class="btn btn-sm btn-green" onclick="saveWaNumber()">Save</button>
-      </div>
-
-      <div class="adm-toolbar">
-        <div class="adm-filters">
-          ${['all','pending','accepted','delivering','delivered','cancelled'].map(s => `
-            <button class="adm-tab ${s === 'all' ? 'active' : ''}" data-filter="${s}"
-                    onclick="filterAdmin('${s}')">
-              ${s === 'all' ? 'Saare' : getStatusShort(s)}
-              <span class="adm-tab-n">${s === 'all' ? orders.length : c[s]}</span>
-            </button>
-          `).join('')}
-        </div>
-        <input type="search" id="admSearch" class="adm-search" placeholder="🔍 Naam, phone ya Order ID se dhundo..."
-               oninput="renderAdminGrid()">
-      </div>
-
-      <div class="admin-grid" id="adminGrid"></div>
-    </div>
-  `;
-  window._adminFilter = 'all';
-  renderAdminGrid();
-  if (window.OrderNotify) window.OrderNotify.mount();
-}
-
 function statusCounts() {
   const c = { pending: 0, accepted: 0, delivering: 0, delivered: 0, cancelled: 0 };
   orders.forEach(o => { if (o.status in c) c[o.status]++; });
@@ -1609,7 +1627,9 @@ function doAdminLogin() {
     sessionStorage.setItem('tiffin_admin', '1');
     syncAdminNav();
     toast('Admin login successful!');
-    renderAdmin(document.getElementById('app'));
+    // re-render the page that hosts the admin area (My Orders)
+    renderOrders(document.getElementById('app'));
+    if (typeof renderAdminGrid === 'function') renderAdminGrid();
   } else {
     toast('Galat password!', 'error');
   }
@@ -1775,8 +1795,9 @@ function updateOrderStatus(id, status) {
   order.timeline = order.timeline || [];
   order.timeline.push({ status, time: new Date().toISOString() });
   saveOrders();
-  // keep the header counters honest after a status change
-  renderAdmin(document.getElementById('app'));
+  // keep the stats, tabs and grid honest after a status change
+  renderOrders(document.getElementById('app'));
+  if (typeof renderAdminGrid === 'function') renderAdminGrid();
   toast(`Order ${id}: ${getStatusLabel(status)}`);
 }
 
@@ -1784,7 +1805,8 @@ function deleteOrder(id) {
   if (!confirm(`Order ${id} delete karna hai? Yeh wapas nahi aayega.`)) return;
   orders = orders.filter(o => o.id !== id);
   saveOrders();
-  renderAdmin(document.getElementById('app'));
+  renderOrders(document.getElementById('app'));
+  if (typeof renderAdminGrid === 'function') renderAdminGrid();
   toast('Order delete ho gaya');
 }
 
