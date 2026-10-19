@@ -1415,6 +1415,20 @@ function waCopy(id) {
   });
 }
 
+// Customer removes one order from their own history. It is removed from
+// localStorage, so the admin grid loses it too (the admin grid reads the
+// same list).
+function deleteCustomerOrder(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  if (!confirm(`Order ${id} delete karna hai? Yeh history se hamesha ke liye hat jayega.`)) return;
+  orders = orders.filter(x => x.id !== id);
+  saveOrders();
+  toast('🗑️ Order delete ho gaya');
+  renderOrders(document.getElementById('app'));
+  if (isAdmin && typeof renderAdminGrid === 'function') renderAdminGrid();
+}
+
 // shop -> customer: opens WhatsApp on the customer's number with a
 // confirmation message the owner can review before sending
 function waCustomer(id) {
@@ -1488,6 +1502,11 @@ function renderOrders(app) {
               <button class="wa-mini" onclick="waCopy('${o.id}')" title="Order details copy karo">📋 Copy</button>
               ${o.id === lastOrderForWA ? '<span class="wa-hint">← abhi bheja nahi? Send daba do</span>' : ''}
             </div>
+
+            <div class="order-actions">
+              <button class="order-del" onclick="deleteCustomerOrder('${o.id}')"
+                      title="Yeh order history se hatao">🗑️ Delete Order</button>
+            </div>
           </div>
         `;
       }).join('')}
@@ -1512,7 +1531,6 @@ function renderAdminLoginOrPanel() {
                placeholder="Admin password"
                onkeydown="if(event.key==='Enter')doAdminLogin()">
         <button class="btn btn-primary alc-btn" onclick="doAdminLogin()">Login</button>
-        <div class="alc-hint">Default password: <b>admin123</b></div>
       </div>
     `;
   }

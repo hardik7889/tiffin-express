@@ -1029,6 +1029,28 @@ nav .cart-btn.pulse { animation:cartPulse .85s cubic-bezier(.2,.9,.2,1); }
 .cc-role { font-size:.85rem; color:var(--dim); margin-top:-0.4rem; }
 .cc-wa { margin-top:0.6rem; width:100%; justify-content:center; }
 
+/* customer's own delete action, kept apart from the WhatsApp row */
+.order-actions {
+  display:flex; justify-content:flex-end;
+  margin-top:0.5rem; padding-top:0.6rem;
+  border-top:1px dashed rgba(255,255,255,.07);
+}
+.order-del {
+  padding:8px 14px; border-radius:9px; cursor:pointer;
+  background:rgba(255,71,87,.09); border:1px solid rgba(255,71,87,.35);
+  color:#ff6b78; font-family:'Orbitron',sans-serif;
+  font-size:8.5px; font-weight:700; letter-spacing:.04em;
+  text-transform:uppercase; line-height:1.2;
+  transition:background .2s, box-shadow .2s;
+}
+.order-del:hover {
+  background:rgba(255,71,87,.18);
+  box-shadow:0 0 14px rgba(255,71,87,.35);
+}
+@media (max-width:768px) {
+  .order-del { width:100%; padding:11px 14px; font-size:9.5px; }
+}
+
 /* ---------- admin login card (inside My Orders) ---------- */
 .admin-login-card {
   margin-top: 2.5rem; padding: 2rem 1.6rem; border-radius: 20px;
