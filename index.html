@@ -637,6 +637,11 @@ function route() {
   else if (r === 'orders') renderOrders(app);
   else if (r === 'admin') renderAdmin(app);
   else renderHome(app);
+  // a phone must never sit on the admin route: customers get the home page
+  if (r === 'admin' && isMobile() && !isAdmin) {
+    location.replace('#/');
+    return;
+  }
   // stop the order watcher as soon as the admin panel leaves the screen
   if (r !== 'admin' && window.OrderNotify) window.OrderNotify.unmount();
   // arriving at the admin panel arms the ring straight away, no button press
@@ -1502,6 +1507,20 @@ let isAdmin = sessionStorage.getItem('tiffin_admin') === '1';
 
 const STATUS_FLOW = ['pending', 'accepted', 'delivering', 'delivered'];
 
+// Is this a phone-sized screen? Used to keep the customer-facing nav clean
+// and to land new visitors on the home page instead of a stale route.
+function isMobile() {
+  return window.matchMedia && window.matchMedia('(max-width:768px)').matches;
+}
+
+// The admin link is hidden on phones unless this browser is signed in as the
+// admin. On desktop it stays visible as before.
+function syncAdminNav() {
+  const link = document.querySelector('[data-route="admin"]');
+  if (!link) return;
+  link.classList.toggle('admin-authed', isAdmin === true);
+}
+
 function renderAdmin(app) {
   if (!isAdmin) {
     app.innerHTML = `
@@ -1588,6 +1607,7 @@ function doAdminLogin() {
   if (pass === ADMIN_PASSWORD) {
     isAdmin = true;
     sessionStorage.setItem('tiffin_admin', '1');
+    syncAdminNav();
     toast('Admin login successful!');
     renderAdmin(document.getElementById('app'));
   } else {
@@ -1598,6 +1618,7 @@ function doAdminLogin() {
 function logoutAdmin() {
   isAdmin = false;
   sessionStorage.removeItem('tiffin_admin');
+  syncAdminNav();
   toast('Admin logout ho gaya');
   location.hash = '#/';
 }
@@ -1769,7 +1790,14 @@ function deleteOrder(id) {
 
 // ===== INIT =====
 updateCartBadge();
+syncAdminNav();
+// A phone-sized visitor must never land on a stale admin route — open the
+// customer-facing home page instead. Desktop keeps the URL behaviour.
+if (isMobile() && location.hash === '#/admin' && !isAdmin) {
+  location.replace('#/');
+}
 route();
+window.addEventListener('resize', syncAdminNav);
 </script>
 </body>
 </html>
