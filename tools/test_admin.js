@@ -52,7 +52,8 @@ global.DISH_PHOTOS = {}; global.PKG_PHOTOS = {};
 
 const wrapped = inline + `
 ;module.exports = { orders: () => orders, setOrders: v => { orders = v; },
-  renderAdmin, renderAdminGrid, filterAdmin, updateOrderStatus, deleteOrder,
+  renderOrders, renderAdminLoginOrPanel, renderAdminSection, renderAdminGrid,
+  filterAdmin, updateOrderStatus, deleteOrder, deleteCustomerOrder,
   statusCounts, adminVisible, getStatusShort, doAdminLogin, logoutAdmin,
   isAdminGet: () => isAdmin, appEl: () => document.getElementById('app') };
 `;
@@ -74,7 +75,8 @@ const mk = (id, status, name, phone, total, delivery) => ({
 // ---- login gate ----
 console.log('\n--- login gate ---');
 api.logoutAdmin();
-api.renderAdmin(appEl);
+// when signed out, My Orders renders the login card (not the dashboard)
+api.renderOrders(appEl);
 t('logged out shows password field', /adminPass/.test(appEl.innerHTML));
 t('logged out hides the dashboard', !/adm-stats/.test(appEl.innerHTML));
 
@@ -95,12 +97,13 @@ api.setOrders([
   mk('TF005', 'delivered', 'Vikram Singh', '9811122233', 420),
   mk('TF006', 'cancelled', 'Neha Gupta', '9822233344', 75),
 ]);
-api.renderAdmin(appEl);
+api.renderOrders(appEl);
+api.renderAdminGrid();
 const dash = appEl.innerHTML;
 t('shows all 6 orders in the tab count', /Saare[\s\S]{0,120}>6</.test(dash), 'count missing');
 t('stat block rendered', /adm-stats/.test(dash));
 t('shows revenue stat', /Revenue/.test(dash));
-t('shows today count', /Aaj ke/.test(dash));
+t('shows today count', /Today's Orders/.test(dash));
 t('search box present', /admSearch/.test(dash));
 t('filter tabs present', (dash.match(/adm-tab /g) || []).length === 6, 'tabs=' + (dash.match(/adm-tab /g) || []).length);
 
